@@ -1,4 +1,4 @@
-# ⚡ ExDesk
+# ExDesk
 
 <p align="center">
   <p align="center">
@@ -25,7 +25,7 @@
 
 ---
 
-## 📖 About ExDesk
+## Overview
 
 **ExDesk** is an open-source **IT Service Management (ITSM)** platform designed to unify **Help Desk** operations and **IT Asset Management** into a single, cohesive interface.
 
@@ -33,25 +33,25 @@ Think of it as **Zendesk meets Snipe-IT**, but built on the **BEAM (Erlang VM)**
 
 Current ITSM solutions are often resource-heavy, expensive, or lack seamless integration between tickets and hardware assets. ExDesk solves this by leveraging **Elixir** and **Phoenix LiveView** to provide a fault-tolerant, highly concurrent, and real-time experience without the bloat.
 
-### 🚀 Why ExDesk?
+### Value Proposition
 
-- **⚡ High Performance:** Designed to handle thousands of concurrent connections with low memory footprint.
-- **🔄 Real-Time:** Instant updates on ticket status, chats, and asset tracking using Phoenix Channels.
-- **🛡️ Fault Tolerant:** Built on the battle-tested Erlang OTP ecosystem.
-- **💸 Open Source:** No per-agent licensing fees. You own your data.
+- **High Performance:** Designed to handle thousands of concurrent connections with low memory footprint.
+- **Real-Time:** Instant updates on ticket status, chats, and asset tracking using Phoenix Channels.
+- **Fault Tolerant:** Built on the battle-tested Erlang OTP ecosystem.
+- **Open Source:** No per-agent licensing fees. You own your data.
 
 ---
 
-## ✨ Key Features
+## Core Features
 
-### 🎫 Help Desk (Issue Tracking)
+### Help Desk and Ticket Management
 
 - **Ticket Management:** Organize support requests with customizable statuses, priorities, and tags.
 - **SLA Tracking:** Set and monitor Service Level Agreements to ensure timely responses.
 - **Knowledge Base:** Markdown-supported articles to help users help themselves.
 - **Multi-Channel:** Receive tickets via Email, API, or Web Interface.
 
-### 📦 Asset Management (ITAM)
+### IT Asset Management (ITAM)
 
 - **Inventory Tracking:** Manage hardware (laptops, mobiles) and software licenses.
 - **Lifecycle Management:** Track assets from procurement to deployment and retirement.
@@ -60,7 +60,7 @@ Current ITSM solutions are often resource-heavy, expensive, or lack seamless int
 
 ---
 
-## 🛠️ Tech Stack
+## Technology Stack
 
 - **Language:** [Elixir](https://elixir-lang.org/)
 - **Framework:** [Phoenix Framework](https://www.phoenixframework.org/)
@@ -69,7 +69,7 @@ Current ITSM solutions are often resource-heavy, expensive, or lack seamless int
 
 ---
 
-## 💻 Getting Started
+## Deployment and Installation
 
 ### Prerequisites
 
@@ -104,7 +104,7 @@ Current ITSM solutions are often resource-heavy, expensive, or lack seamless int
     mix phx.server
     ```
 
-### 🐳 Docker (Quick Start)
+### Docker Deployment
 
 If you prefer to use Docker, you can start the entire stack (App, Postgres, MinIO) with a single command:
 
@@ -117,7 +117,7 @@ Once the containers are healthy, visit [`localhost:4000`](http://localhost:4000)
 
 ---
 
-## 🛣️ Roadmap
+## Development Roadmap
 
 - [ ] Core Ticket Management System
 - [ ] Asset CRUD & Database Schema
@@ -129,12 +129,12 @@ Once the containers are healthy, visit [`localhost:4000`](http://localhost:4000)
 
 ---
 
-## 📝 License
+## License
 
 Distributed under the MIT License. See `LICENSE` for more information.
 
 ---
 
 <p align="center">
-  Made with ❤️ by the <a href="https://github.com/ExDesk">ExDesk Team</a>.
+  Created by the <a href="https://github.com/ExDesk">ExDesk Team</a>.
 </p>
