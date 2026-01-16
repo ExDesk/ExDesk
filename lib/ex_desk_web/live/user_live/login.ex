@@ -18,7 +18,7 @@ defmodule ExDeskWeb.UserLive.Login do
             ExDesk
           </h1>
           <p class="text-xl text-zinc-300 font-light leading-relaxed">
-            The Open Source Service Desk & Asset Management Solution using the power of <span class="font-semibold text-purple-400">Elixir</span>.
+            Open Source. Real-time. Reliable
           </p>
         </div>
         
@@ -26,30 +26,34 @@ defmodule ExDeskWeb.UserLive.Login do
         <div class="absolute bottom-0 left-0 w-full h-1/3 bg-gradient-to-t from-zinc-900/80 to-transparent">
         </div>
       </div>
-      
-    <!-- Right Side (Login Form) -->
-      <div class="w-full lg:w-1/2 flex flex-col justify-center px-4 py-12 sm:px-6 lg:px-20 xl:px-24 bg-base-100">
-        <div class="mx-auto w-full max-w-sm lg:w-96">
-          <div class="text-center mb-10">
-            <h2 class="mt-6 text-3xl font-extrabold text-base-content">
+      <!-- Right Side (Login Form) -->
+      <div class="w-full lg:w-1/2 flex flex-col justify-center px-8 py-12 sm:px-12 lg:px-24 bg-white dark:bg-base-100">
+        <div class="mx-auto w-full max-w-md">
+          <!-- Logo for Mobile/Form Context -->
+          <div class="flex justify-center mb-8">
+            <img src={~p"/images/logo.svg"} alt="ExDesk Logo" class="h-12 w-auto" />
+          </div>
+
+          <div class="text-center mb-12">
+            <h2 class="text-3xl font-bold text-base-content tracking-tight">
               Welcome back
             </h2>
-            <div class="mt-2 text-sm text-base-content/70">
+            <div class="mt-3 text-base text-base-content/70">
               <%= if @current_scope do %>
                 Please reauthenticate to continue.
               <% else %>
-                Don't have an account?
+                New to ExDesk?
                 <.link
                   navigate={~p"/users/register"}
-                  class="font-medium text-primary hover:text-primary-focus transition-colors"
+                  class="font-semibold text-primary hover:text-primary-focus transition-colors"
                 >
-                  Sign up
+                  Create an account
                 </.link>
               <% end %>
             </div>
           </div>
 
-          <div :if={local_mail_adapter?()} class="alert alert-info mb-6 shadow-sm">
+          <div :if={local_mail_adapter?()} class="alert alert-info mb-8 shadow-sm">
             <.icon name="hero-information-circle" class="size-6 shrink-0" />
             <div>
               <p class="font-bold">Local Mail Adapter</p>
@@ -59,90 +63,86 @@ defmodule ExDeskWeb.UserLive.Login do
             </div>
           </div>
 
-          <div class="space-y-6">
-            <div>
-              <.form
-                :let={f}
-                for={@form}
-                id="login_form_magic"
-                action={~p"/users/log-in"}
-                phx-submit="submit_magic"
-                class="space-y-4"
-              >
-                <.input
-                  readonly={!!@current_scope}
-                  field={f[:email]}
-                  type="email"
-                  label="Email address"
-                  autocomplete="email"
-                  required
-                  phx-mounted={JS.focus()}
-                  class="input-bordered input-primary"
-                />
-                <.button class="btn btn-primary w-full shadow-lg shadow-primary/20">
-                  Log in with email <span aria-hidden="true">→</span>
-                </.button>
-              </.form>
-            </div>
+          <div class="space-y-8">
+            <.form
+              :let={f}
+              for={@form}
+              id="login_form"
+              action={~p"/users/log-in"}
+              phx-submit="submit"
+              phx-trigger-action={@trigger_submit}
+              class="space-y-6"
+            >
+              <.input
+                readonly={!!@current_scope}
+                field={f[:email]}
+                type="email"
+                label="Email address"
+                autocomplete="email"
+                required
+                phx-mounted={JS.focus()}
+                class="input input-bordered input-lg w-full focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/50 rounded-xl bg-gray-50 dark:bg-zinc-900/50"
+              />
 
-            <div class="relative">
-              <div class="absolute inset-0 flex items-center">
-                <div class="w-full border-t border-base-300"></div>
+              <.input
+                field={@form[:password]}
+                type="password"
+                label="Password"
+                autocomplete="current-password"
+                class="input input-bordered input-lg w-full focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/50 rounded-xl bg-gray-50 dark:bg-zinc-900/50"
+              />
+
+              <div class="flex items-center justify-between">
+                <div class="flex items-center">
+                  <input
+                    id="remember_me"
+                    name={@form[:remember_me].name}
+                    type="checkbox"
+                    value="true"
+                    class="checkbox checkbox-primary rounded-md focus:ring-2 focus:ring-primary/50"
+                  />
+                  <label
+                    for="remember_me"
+                    class="ml-3 block text-sm font-medium text-base-content/80"
+                  >
+                    Remember me
+                  </label>
+                </div>
               </div>
-              <div class="relative flex justify-center text-sm">
-                <span class="px-2 bg-base-100 text-base-content/50 uppercase tracking-wider font-semibold">
-                  Or continue with
-                </span>
-              </div>
-            </div>
 
-            <div>
-              <.form
-                :let={f}
-                for={@form}
-                id="login_form_password"
-                action={~p"/users/log-in"}
-                phx-submit="submit_password"
-                phx-trigger-action={@trigger_submit}
-                class="space-y-4"
-              >
-                <.input
-                  readonly={!!@current_scope}
-                  field={f[:email]}
-                  type="email"
-                  label="Email address"
-                  autocomplete="email"
-                  required
-                  class="input-bordered"
-                />
-                <.input
-                  field={@form[:password]}
-                  type="password"
-                  label="Password"
-                  autocomplete="current-password"
-                  class="input-bordered"
-                />
+              <div class="pt-2 space-y-4">
+                <button
+                  type="submit"
+                  name="action"
+                  value="password"
+                  phx-disable-with="Authenticating..."
+                  class="btn btn-primary btn-lg w-full rounded-xl shadow-lg shadow-orange-500/20 hover:scale-[1.01] transition-transform !bg-orange-600 !border-orange-600 text-white hover:!bg-orange-700"
+                >
+                  Entrar <span aria-hidden="true">→</span>
+                </button>
 
-                <div class="flex items-center justify-between">
-                  <div class="flex items-center">
-                    <input
-                      id="remember_me"
-                      name={@form[:remember_me].name}
-                      type="checkbox"
-                      value="true"
-                      class="checkbox checkbox-sm checkbox-primary rounded"
-                    />
-                    <label for="remember_me" class="ml-2 block text-sm text-base-content/80">
-                      Remember me
-                    </label>
+                <div class="relative py-2">
+                  <div class="absolute inset-0 flex items-center">
+                    <div class="w-full border-t border-base-300"></div>
+                  </div>
+                  <div class="relative flex justify-center text-sm">
+                    <span class="px-2 bg-white dark:bg-base-100 text-base-content/50 text-xs">
+                      or
+                    </span>
                   </div>
                 </div>
 
-                <.button class="btn btn-neutral w-full">
-                  Sign in with password
-                </.button>
-              </.form>
-            </div>
+                <button
+                  type="submit"
+                  name="action"
+                  value="magic"
+                  phx-disable-with="Sending..."
+                  class="btn btn-ghost btn-outline btn-lg w-full rounded-xl hover:bg-base-200 transition-colors font-normal"
+                >
+                  Enviar Magic Link
+                </button>
+              </div>
+            </.form>
           </div>
         </div>
       </div>
@@ -162,11 +162,11 @@ defmodule ExDeskWeb.UserLive.Login do
   end
 
   @impl true
-  def handle_event("submit_password", _params, socket) do
+  def handle_event("submit", %{"action" => "password"}, socket) do
     {:noreply, assign(socket, :trigger_submit, true)}
   end
 
-  def handle_event("submit_magic", %{"user" => %{"email" => email}}, socket) do
+  def handle_event("submit", %{"action" => "magic", "user" => %{"email" => email}}, socket) do
     if user = Accounts.get_user_by_email(email) do
       Accounts.deliver_login_instructions(
         user,
