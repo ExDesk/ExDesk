@@ -1,5 +1,3 @@
-This is the most important text. It must explain "What" and "Why" immediately.
-
 🟣 ExDesk
 Unified Issue Tracking & Help Desk Solution.
 
