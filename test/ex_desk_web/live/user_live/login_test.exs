@@ -9,8 +9,8 @@ defmodule ExDeskWeb.UserLive.LoginTest do
       {:ok, _lv, html} = live(conn, ~p"/users/log-in")
 
       assert html =~ "Welcome back"
-      assert html =~ "Create an account"
-      assert html =~ "Entrar"
+      assert html =~ "Contact your administrator"
+      assert html =~ "Sign in"
     end
   end
 
@@ -46,20 +46,6 @@ defmodule ExDeskWeb.UserLive.LoginTest do
     end
   end
 
-  describe "login navigation" do
-    test "redirects to registration page when the Register button is clicked", %{conn: conn} do
-      {:ok, lv, _html} = live(conn, ~p"/users/log-in")
-
-      {:ok, _login_live, login_html} =
-        lv
-        |> element("a", "Create an account")
-        |> render_click()
-        |> follow_redirect(conn, ~p"/users/register")
-
-      assert login_html =~ "Register"
-    end
-  end
-
   describe "re-authentication (sudo mode)" do
     setup %{conn: conn} do
       user = user_fixture()
@@ -70,8 +56,8 @@ defmodule ExDeskWeb.UserLive.LoginTest do
       {:ok, _lv, html} = live(conn, ~p"/users/log-in")
 
       assert html =~ "Please reauthenticate to continue"
-      refute html =~ "Create an account"
-      assert html =~ "Entrar"
+      refute html =~ "Contact your administrator"
+      assert html =~ "Sign in"
 
       assert html =~
                ~s(<input type="email" name="user[email]" id="login_form_email" value="#{user.email}")
