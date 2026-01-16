@@ -14,14 +14,14 @@ defmodule ExDeskWeb.UserLive.Login do
 
         <div class="relative z-10 flex flex-col items-center max-w-lg text-center">
           <img src={~p"/images/logo.svg"} alt="ExDesk Logo" class="h-24 w-auto mb-8 drop-shadow-2xl" />
-          <h1 class="text-5xl font-bold tracking-tight mb-4 text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-300">
+          <h1 class="text-5xl font-bold tracking-tight mb-4 text-white">
             ExDesk
           </h1>
           <p class="text-xl text-zinc-300 font-light leading-relaxed">
             Open Source. Real-time. Reliable
           </p>
         </div>
-        
+
     <!-- Decoration -->
         <div class="absolute bottom-0 left-0 w-full h-1/3 bg-gradient-to-t from-zinc-900/80 to-transparent">
         </div>
@@ -116,7 +116,7 @@ defmodule ExDeskWeb.UserLive.Login do
                   name="action"
                   value="password"
                   phx-disable-with="Authenticating..."
-                  class="btn btn-primary btn-lg w-full rounded-xl shadow-lg shadow-orange-500/20 hover:scale-[1.01] transition-transform !bg-orange-600 !border-orange-600 text-white hover:!bg-orange-700"
+                  class="btn btn-primary btn-lg w-full rounded-xl shadow-lg shadow-primary/20 hover:scale-[1.01] transition-transform"
                 >
                   Entrar <span aria-hidden="true">→</span>
                 </button>
@@ -163,6 +163,10 @@ defmodule ExDeskWeb.UserLive.Login do
 
   @impl true
   def handle_event("submit", %{"action" => "password"}, socket) do
+    {:noreply, assign(socket, :trigger_submit, true)}
+  end
+
+  def handle_event("submit", params, socket) when not is_map_key(params, "action") do
     {:noreply, assign(socket, :trigger_submit, true)}
   end
 

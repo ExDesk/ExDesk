@@ -18,7 +18,7 @@ defmodule ExDeskWeb.UserSessionControllerTest do
         })
 
       assert get_session(conn, :user_token)
-      assert redirected_to(conn) == ~p"/"
+      assert redirected_to(conn) == ~p"/dashboard"
 
       # Now do a logged in request and assert on the menu
       conn = get(conn, ~p"/")
@@ -41,7 +41,7 @@ defmodule ExDeskWeb.UserSessionControllerTest do
         })
 
       assert conn.resp_cookies["_ex_desk_web_user_remember_me"]
-      assert redirected_to(conn) == ~p"/"
+      assert redirected_to(conn) == ~p"/dashboard"
     end
 
     test "logs the user in with return to", %{conn: conn, user: user} do
@@ -82,7 +82,7 @@ defmodule ExDeskWeb.UserSessionControllerTest do
         })
 
       assert get_session(conn, :user_token)
-      assert redirected_to(conn) == ~p"/"
+      assert redirected_to(conn) == ~p"/dashboard"
 
       # Now do a logged in request and assert on the menu
       conn = get(conn, ~p"/")
@@ -103,7 +103,7 @@ defmodule ExDeskWeb.UserSessionControllerTest do
         })
 
       assert get_session(conn, :user_token)
-      assert redirected_to(conn) == ~p"/"
+      assert redirected_to(conn) == ~p"/dashboard"
       assert Phoenix.Flash.get(conn.assigns.flash, :info) =~ "User confirmed successfully."
 
       assert Accounts.get_user!(user.id).confirmed_at
