@@ -17,6 +17,15 @@ defmodule ExDeskWeb.UserLive.Login do
       <div class="hidden lg:flex w-1/2 bg-zinc-900 relative flex-col items-center justify-center p-12 text-white overflow-hidden">
         <div class="absolute inset-0 bg-gradient-to-br from-purple-900/30 to-blue-900/10 pointer-events-none">
         </div>
+        
+    <!-- Background Pattern -->
+        <div class="absolute inset-0 z-0 opacity-10 pointer-events-none select-none">
+          <img
+            src={~p"/images/login-bg.png"}
+            class="w-full h-full object-cover mix-blend-overlay"
+            alt=""
+          />
+        </div>
 
         <div class="relative z-10 flex flex-col items-center max-w-lg text-center">
           <img src={~p"/images/logo.svg"} alt="ExDesk Logo" class="h-24 w-auto mb-8 drop-shadow-2xl" />
