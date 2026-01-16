@@ -13,7 +13,7 @@ services:
     ports:
       - "5432:5432"
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - postgres_data:/var/lib/postgresql
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres -d ex_desk_dev"]
       interval: 10s
@@ -36,7 +36,7 @@ services:
     ports:
       - "5433:5432"
     volumes:
-      - postgres_test_data:/var/lib/postgresql/data
+      - postgres_test_data:/var/lib/postgresql
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres -d ex_desk_test"]
       interval: 10s
@@ -89,30 +89,10 @@ services:
     networks:
       - exdesk_network
 
+
   # =============================================================================
-  # ExDesk Application
+  # Networking and Volumes
   # =============================================================================
-  app:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    container_name: exdesk_app
-    restart: unless-stopped
-    depends_on:
-      postgres:
-        condition: service_healthy
-      minio:
-        condition: service_healthy
-    environment:
-      - DATABASE_URL=ecto://postgres:postgres@postgres:5432/ex_desk_prod
-      - SECRET_KEY_BASE=qf7SGiI7Vo1l62VlEd9wcyacVhYdVxTcYyuREiYfsILqmdPnpzo9dLOgvVslXfVx
-      - PHX_HOST=localhost
-      - PORT=4000
-      - PHX_SERVER=true
-    ports:
-      - "4000:4000"
-    networks:
-      - exdesk_network
 
 volumes:
   postgres_data:

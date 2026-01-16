@@ -104,16 +104,23 @@ Current ITSM solutions are often resource-heavy, expensive, or lack seamless int
     mix phx.server
     ```
 
-### Docker Deployment
+### Docker Deployment (Infrastructure)
 
-If you prefer to use Docker, you can start the entire stack (App, Postgres, MinIO) with a single command:
+The provided Docker configuration manages the required infrastructure services (PostgreSQL and MinIO).
 
-1.  **Build and start:**
+1.  **Start Infrastructure Services:**
+
     ```bash
-    docker-compose up --build
+    docker-compose up -d
     ```
 
-Once the containers are healthy, visit [`localhost:4000`](http://localhost:4000).
+2.  **Initialize Application locally:**
+    Ensure Elixir and Postgres are installed and run:
+    ```bash
+    mix deps.get
+    mix ecto.setup
+    mix phx.server
+    ```
 
 ---
 
