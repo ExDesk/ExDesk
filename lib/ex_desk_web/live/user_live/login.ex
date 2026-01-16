@@ -23,9 +23,13 @@ defmodule ExDeskWeb.UserLive.Login do
           <h1 class="text-5xl font-bold tracking-tight mb-4 text-white">
             ExDesk
           </h1>
-          <p class="text-xl text-zinc-300 font-light leading-relaxed">
-            Open Source. Real-time. Reliable
-          </p>
+          <div class="font-mono text-lg sm:text-xl text-zinc-300 bg-zinc-800/50 px-6 py-4 rounded-xl border border-zinc-700/50 backdrop-blur-sm shadow-2xl mt-4">
+            <span class="text-purple-400">IT_Issues</span>
+            <span class="text-zinc-500 mx-2">|&gt;</span>
+            <span class="text-white font-bold">ExDesk</span>
+            <span class="text-zinc-500 mx-2">|&gt;</span>
+            <span class="text-green-400">Solved</span>
+          </div>
         </div>
         
     <!-- Decoration -->
