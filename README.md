@@ -35,60 +35,66 @@ Current ITSM solutions are often resource-heavy, expensive, or lack seamless int
 
 ### 🚀 Why ExDesk?
 
-* **⚡ High Performance:** Designed to handle thousands of concurrent connections with low memory footprint.
-* **🔄 Real-Time:** Instant updates on ticket status, chats, and asset tracking using Phoenix Channels.
-* **🛡️ Fault Tolerant:** Built on the battle-tested Erlang OTP ecosystem.
-* **💸 Open Source:** No per-agent licensing fees. You own your data.
+- **⚡ High Performance:** Designed to handle thousands of concurrent connections with low memory footprint.
+- **🔄 Real-Time:** Instant updates on ticket status, chats, and asset tracking using Phoenix Channels.
+- **🛡️ Fault Tolerant:** Built on the battle-tested Erlang OTP ecosystem.
+- **💸 Open Source:** No per-agent licensing fees. You own your data.
 
 ---
 
 ## ✨ Key Features
 
 ### 🎫 Help Desk (Issue Tracking)
-* **Ticket Management:** Organize support requests with customizable statuses, priorities, and tags.
-* **SLA Tracking:** Set and monitor Service Level Agreements to ensure timely responses.
-* **Knowledge Base:** Markdown-supported articles to help users help themselves.
-* **Multi-Channel:** Receive tickets via Email, API, or Web Interface.
+
+- **Ticket Management:** Organize support requests with customizable statuses, priorities, and tags.
+- **SLA Tracking:** Set and monitor Service Level Agreements to ensure timely responses.
+- **Knowledge Base:** Markdown-supported articles to help users help themselves.
+- **Multi-Channel:** Receive tickets via Email, API, or Web Interface.
 
 ### 📦 Asset Management (ITAM)
-* **Inventory Tracking:** Manage hardware (laptops, mobiles) and software licenses.
-* **Lifecycle Management:** Track assets from procurement to deployment and retirement.
-* **Ticket Integration:** Link specific assets to support tickets for faster context and resolution.
-* **Check-in/Check-out:** Assign assets to users with history logging.
+
+- **Inventory Tracking:** Manage hardware (laptops, mobiles) and software licenses.
+- **Lifecycle Management:** Track assets from procurement to deployment and retirement.
+- **Ticket Integration:** Link specific assets to support tickets for faster context and resolution.
+- **Check-in/Check-out:** Assign assets to users with history logging.
 
 ---
 
 ## 🛠️ Tech Stack
 
-* **Language:** [Elixir](https://elixir-lang.org/)
-* **Framework:** [Phoenix Framework](https://www.phoenixframework.org/)
-* **Database:** PostgreSQL
-* **Frontend:** Phoenix LiveView (Server-side rendering with real-time capabilities) & Tailwind CSS
+- **Language:** [Elixir](https://elixir-lang.org/)
+- **Framework:** [Phoenix Framework](https://www.phoenixframework.org/)
+- **Database:** PostgreSQL
+- **Frontend:** Phoenix LiveView (Server-side rendering with real-time capabilities) & Tailwind CSS
 
 ---
 
 ## 💻 Getting Started
 
 ### Prerequisites
-* Elixir 1.14+
-* Erlang/OTP 25+
-* PostgreSQL 12+
+
+- Elixir 1.14+
+- Erlang/OTP 25+
+- PostgreSQL 12+
 
 ### Installation
 
 1.  **Clone the repository:**
+
     ```bash
     git clone [https://github.com/ExDesk/ExDesk.git](https://github.com/ExDesk/ExDesk.git)
     cd ExDesk
     ```
 
 2.  **Install dependencies:**
+
     ```bash
     mix deps.get
     ```
 
 3.  **Setup the database:**
     Make sure your Postgres service is running and configured in `config/dev.exs`.
+
     ```bash
     mix ecto.setup
     ```
@@ -98,7 +104,16 @@ Current ITSM solutions are often resource-heavy, expensive, or lack seamless int
     mix phx.server
     ```
 
-Now you can visit [`localhost:4000`](http://localhost:4000) from your browser.
+### 🐳 Docker (Quick Start)
+
+If you prefer to use Docker, you can start the entire stack (App, Postgres, MinIO) with a single command:
+
+1.  **Build and start:**
+    ```bash
+    docker-compose up --build
+    ```
+
+Once the containers are healthy, visit [`localhost:4000`](http://localhost:4000).
 
 ---
 
@@ -110,21 +125,7 @@ Now you can visit [`localhost:4000`](http://localhost:4000) from your browser.
 - [ ] Linking Assets to Tickets
 - [ ] Email Integration (Incoming/Outgoing)
 - [ ] API for external integrations
-- [ ] Docker Support
-
----
-
-## 🤝 Contributing
-
-Contributions are what make the open source community such an amazing place to learn, inspire, and create. Any contributions you make are **greatly appreciated**.
-
-1.  Fork the Project
-2.  Create your Feature Branch (`git checkout -b feature/AmazingFeature`)
-3.  Commit your Changes (`git commit -m 'Add some AmazingFeature'`)
-4.  Push to the Branch (`git push origin feature/AmazingFeature`)
-5.  Open a Pull Request
-
-See `CONTRIBUTING.md` for more details.
+- [x] Docker Support
 
 ---
 

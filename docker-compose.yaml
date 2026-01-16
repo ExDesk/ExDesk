@@ -57,8 +57,8 @@ services:
       MINIO_ROOT_USER: minioadmin
       MINIO_ROOT_PASSWORD: minioadmin123
     ports:
-      - "9000:9000"   # MinIO API
-      - "9001:9001"   # MinIO Console
+      - "9000:9000" # MinIO API
+      - "9001:9001" # MinIO Console
     volumes:
       - minio_data:/data
     healthcheck:
@@ -86,6 +86,31 @@ services:
       echo 'Bucket exdesk-images created successfully!';
       exit 0;
       "
+    networks:
+      - exdesk_network
+
+  # =============================================================================
+  # ExDesk Application
+  # =============================================================================
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: exdesk_app
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+    environment:
+      - DATABASE_URL=ecto://postgres:postgres@postgres:5432/ex_desk_prod
+      - SECRET_KEY_BASE=qf7SGiI7Vo1l62VlEd9wcyacVhYdVxTcYyuREiYfsILqmdPnpzo9dLOgvVslXfVx
+      - PHX_HOST=localhost
+      - PORT=4000
+      - PHX_SERVER=true
+    ports:
+      - "4000:4000"
     networks:
       - exdesk_network
 
