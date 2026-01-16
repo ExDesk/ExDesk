@@ -3,6 +3,12 @@ defmodule ExDeskWeb.UserLive.Login do
 
   alias ExDesk.Accounts
 
+  @doc """
+  Renders the Authentication Interface.
+
+  Presents the visual identity surface for users to claim their identity, supporting both
+  traditional credential-based verification and passwordless magic link initiation.
+  """
   @impl true
   def render(assigns) do
     ~H"""
@@ -11,23 +17,36 @@ defmodule ExDeskWeb.UserLive.Login do
       <div class="hidden lg:flex w-1/2 bg-zinc-900 relative flex-col items-center justify-center p-12 text-white overflow-hidden">
         <div class="absolute inset-0 bg-gradient-to-br from-purple-900/30 to-blue-900/10 pointer-events-none">
         </div>
+        
+    <!-- Background Pattern -->
+        <div class="absolute inset-0 z-0 opacity-10 pointer-events-none select-none">
+          <img
+            src={~p"/images/login-bg.png"}
+            class="w-full h-full object-cover mix-blend-overlay"
+            alt=""
+          />
+        </div>
 
         <div class="relative z-10 flex flex-col items-center max-w-lg text-center">
           <img src={~p"/images/logo.svg"} alt="ExDesk Logo" class="h-24 w-auto mb-8 drop-shadow-2xl" />
           <h1 class="text-5xl font-bold tracking-tight mb-4 text-white">
             ExDesk
           </h1>
-          <p class="text-xl text-zinc-300 font-light leading-relaxed">
-            Open Source. Real-time. Reliable
-          </p>
+          <div class="font-mono text-lg sm:text-xl text-zinc-300 bg-zinc-800/50 px-6 py-4 rounded-xl border border-zinc-700/50 backdrop-blur-sm shadow-2xl mt-4">
+            <span class="text-purple-400">IT_Issues</span>
+            <span class="text-zinc-500 mx-2">|&gt;</span>
+            <span class="text-white font-bold">ExDesk</span>
+            <span class="text-zinc-500 mx-2">|&gt;</span>
+            <span class="text-green-400">Solved</span>
+          </div>
         </div>
-
+        
     <!-- Decoration -->
         <div class="absolute bottom-0 left-0 w-full h-1/3 bg-gradient-to-t from-zinc-900/80 to-transparent">
         </div>
       </div>
       <!-- Right Side (Login Form) -->
-      <div class="w-full lg:w-1/2 flex flex-col justify-center px-8 py-12 sm:px-12 lg:px-24 bg-white dark:bg-base-100">
+      <div class="w-full lg:w-1/2 flex flex-col justify-center px-8 py-12 sm:px-12 lg:px-24 bg-white dark:bg-base-100 relative">
         <div class="mx-auto w-full max-w-md">
           <!-- Logo for Mobile/Form Context -->
           <div class="flex justify-center mb-8">
@@ -42,13 +61,7 @@ defmodule ExDeskWeb.UserLive.Login do
               <%= if @current_scope do %>
                 Please reauthenticate to continue.
               <% else %>
-                New to ExDesk?
-                <.link
-                  navigate={~p"/users/register"}
-                  class="font-semibold text-primary hover:text-primary-focus transition-colors"
-                >
-                  Create an account
-                </.link>
+                Don't have an account? Contact your administrator.
               <% end %>
             </div>
           </div>
@@ -118,7 +131,7 @@ defmodule ExDeskWeb.UserLive.Login do
                   phx-disable-with="Authenticating..."
                   class="btn btn-primary btn-lg w-full rounded-xl shadow-lg shadow-primary/20 hover:scale-[1.01] transition-transform"
                 >
-                  Entrar <span aria-hidden="true">→</span>
+                  Sign in <span aria-hidden="true">→</span>
                 </button>
 
                 <div class="relative py-2">
@@ -139,17 +152,30 @@ defmodule ExDeskWeb.UserLive.Login do
                   phx-disable-with="Sending..."
                   class="btn btn-ghost btn-outline btn-lg w-full rounded-xl hover:bg-base-200 transition-colors font-normal"
                 >
-                  Enviar Magic Link
+                  Send Magic Link
                 </button>
               </div>
             </.form>
           </div>
+        </div>
+
+        <div class="absolute bottom-6 left-0 w-full text-center">
+          <p class="text-xs text-base-content/40 font-medium">
+            © 2026 ExDesk Inc. • Privacy Policy • Terms of Service • Help Center
+          </p>
         </div>
       </div>
     </div>
     """
   end
 
+  @doc """
+  Initializes the Authentication Context.
+
+  Establishes the session boundaries and prepares the identity verification form,
+  potentially hydrating the context with pre-filled identity attributes (e.g., email)
+  from the cross-boundary flash scope.
+  """
   @impl true
   def mount(_params, _session, socket) do
     email =
@@ -161,6 +187,13 @@ defmodule ExDeskWeb.UserLive.Login do
     {:ok, assign(socket, form: form, trigger_submit: false)}
   end
 
+  @doc """
+  Processes an Identity Verification Request.
+
+  Acts as the domain gateway for authentication commands:
+  - **Password**: Validates the provided credentials against the Identity Store.
+  - **Magic Link**: Issues a secure, time-bounded access token delivered via the Email Notification Service.
+  """
   @impl true
   def handle_event("submit", %{"action" => "password"}, socket) do
     {:noreply, assign(socket, :trigger_submit, true)}
