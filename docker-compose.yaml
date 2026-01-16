@@ -1,0 +1,102 @@
+services:
+  # =============================================================================
+  # PostgreSQL Database
+  # =============================================================================
+  postgres:
+    image: postgres:18
+    container_name: exdesk_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: ex_desk_dev
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d ex_desk_dev"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - exdesk_network
+
+  # =============================================================================
+  # PostgreSQL Database (Test)
+  # =============================================================================
+  postgres_test:
+    image: postgres:18
+    container_name: exdesk_postgres_test
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: ex_desk_test
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_test_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d ex_desk_test"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - exdesk_network
+
+  # =============================================================================
+  # MinIO - Object Storage (S3 Compatible)
+  # =============================================================================
+  minio:
+    image: minio/minio:latest
+    container_name: exdesk_minio
+    restart: unless-stopped
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin123
+    ports:
+      - "9000:9000"   # MinIO API
+      - "9001:9001"   # MinIO Console
+    volumes:
+      - minio_data:/data
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      interval: 30s
+      timeout: 20s
+      retries: 3
+    networks:
+      - exdesk_network
+
+  # =============================================================================
+  # MinIO Setup - Creates default bucket on startup
+  # =============================================================================
+  minio-setup:
+    image: minio/mc:latest
+    container_name: exdesk_minio_setup
+    depends_on:
+      minio:
+        condition: service_healthy
+    entrypoint: >
+      /bin/sh -c "
+      mc alias set myminio http://minio:9000 minioadmin minioadmin123;
+      mc mb myminio/exdesk-images --ignore-existing;
+      mc anonymous set public myminio/exdesk-images;
+      echo 'Bucket exdesk-images created successfully!';
+      exit 0;
+      "
+    networks:
+      - exdesk_network
+
+volumes:
+  postgres_data:
+    driver: local
+  postgres_test_data:
+    driver: local
+  minio_data:
+    driver: local
+
+networks:
+  exdesk_network:
+    driver: bridge
