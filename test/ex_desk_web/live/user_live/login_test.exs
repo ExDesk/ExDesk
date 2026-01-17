@@ -63,4 +63,39 @@ defmodule ExDeskWeb.UserLive.LoginTest do
                ~s(<input type="email" name="user[email]" id="login_form_email" value="#{user.email}")
     end
   end
+
+  describe "user login - magic link" do
+    test "sends magic link instructions if email is valid", %{conn: conn} do
+      user = user_fixture()
+      {:ok, lv, _html} = live(conn, ~p"/users/log-in")
+
+      form =
+        form(lv, "#login_form",
+          user: %{email: user.email},
+          action: "magic"
+        )
+
+      conn = submit_form(form, conn)
+
+      assert Phoenix.Flash.get(conn.assigns.flash, :info) =~ "receive instructions"
+      assert redirected_to(conn) == ~p"/users/log-in"
+      assert_email_delivered_with(to: [user.email])
+    end
+
+    test "sends magic link (no-op) if email is invalid", %{conn: conn} do
+      {:ok, lv, _html} = live(conn, ~p"/users/log-in")
+
+      form =
+        form(lv, "#login_form",
+          user: %{email: "unknown@example.com"},
+          action: "magic"
+        )
+
+      conn = submit_form(form, conn)
+
+      assert Phoenix.Flash.get(conn.assigns.flash, :info) =~ "receive instructions"
+      assert redirected_to(conn) == ~p"/users/log-in"
+      refute_email_delivered()
+    end
+  end
 end
