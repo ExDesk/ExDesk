@@ -7,7 +7,7 @@ defmodule ExDeskWeb.Authorization do
   ## Usage in LiveViews
 
       def mount(_params, _session, socket) do
-        with {:ok, socket} <- authorize_or_redirect(socket, :list_all_tickets) do
+        with {:ok, socket} <- ensure_authorized!(socket, :list_all_tickets) do
           {:ok, assign(socket, tickets: Support.list_tickets())}
         end
       end
@@ -22,10 +22,11 @@ defmodule ExDeskWeb.Authorization do
   import Phoenix.LiveView
 
   @doc """
-  Checks if the current user is authorized to perform an action.
+  Ensures the current user is authorized to perform an action.
 
-  If authorized, returns `{:ok, socket}`.
-  If not authorized, redirects to home with an error flash and returns `{:halt, socket}`.
+  This function acts as a precondition guard for LiveView mounts and events.
+  If the user is authorized, the LiveView continues normally.
+  If not, the user is redirected with an error message.
 
   ## Parameters
 
@@ -33,15 +34,20 @@ defmodule ExDeskWeb.Authorization do
   - `action` - The action atom to authorize
   - `resource` - Optional resource being accessed (default: `nil`)
 
+  ## Returns
+
+  - `{:ok, socket}` - User is authorized, proceed
+  - `{:halt, socket}` - User is not authorized, redirected to home
+
   ## Examples
 
       def mount(_params, _session, socket) do
-        with {:ok, socket} <- authorize_or_redirect(socket, :manage_groups) do
+        with {:ok, socket} <- ensure_authorized!(socket, :manage_groups) do
           {:ok, assign(socket, groups: Support.list_groups())}
         end
       end
   """
-  def authorize_or_redirect(socket, action, resource \\ nil) do
+  def ensure_authorized!(socket, action, resource \\ nil) do
     user = get_in(socket.assigns, [:current_scope, :user])
 
     case Bodyguard.permit(ExDesk.Support, action, user, resource) do
@@ -51,7 +57,7 @@ defmodule ExDeskWeb.Authorization do
       {:error, _reason} ->
         {:halt,
          socket
-         |> put_flash(:error, "Você não tem permissão para acessar esta página.")
+         |> put_flash(:error, "You are not authorized to access this page.")
          |> push_navigate(to: "/")}
     end
   end

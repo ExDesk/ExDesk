@@ -12,10 +12,10 @@ defmodule ExDesk.Support.Policy do
 
   ## Usage
 
-      iex> Policy.authorize(:assign_ticket, admin_user, ticket)
+      iex> Policy.authorize(:delegate_ticket, admin_user, ticket)
       true
 
-      iex> Policy.authorize(:assign_ticket, regular_user, ticket)
+      iex> Policy.authorize(:delegate_ticket, regular_user, ticket)
       false
 
   ## Integration with Bodyguard
@@ -36,7 +36,7 @@ defmodule ExDesk.Support.Policy do
 
   ## Parameters
 
-  - `action` - The action atom (e.g., `:create_ticket`, `:assign_ticket`)
+  - `action` - The action atom (e.g., `:create_ticket`, `:delegate_ticket`)
   - `user` - The `%User{}` struct with a `:role` field
   - `resource` - The resource being accessed (can be `nil`, a `%Ticket{}`, etc.)
 
@@ -54,7 +54,7 @@ defmodule ExDesk.Support.Policy do
   - `:view_ticket` - View a single ticket (Admin, Agent, or ticket owner)
   - `:create_ticket` - Create a new ticket (All roles)
   - `:update_ticket` - Update ticket fields (Admin, Agent)
-  - `:assign_ticket` - Assign ticket to an agent (Admin, Agent)
+  - `:delegate_ticket` - Delegate ticket to an agent (Admin, Agent)
   - `:change_status` - Change ticket status (Admin, Agent)
   - `:change_priority` - Change ticket priority (Admin, Agent)
   - `:add_comment` - Add a public comment (Admin, Agent, or ticket owner)
@@ -73,7 +73,7 @@ defmodule ExDesk.Support.Policy do
   # Agents can do everything with tickets
   def authorize(:list_all_tickets, %User{role: :agent}, _), do: true
   def authorize(:view_ticket, %User{role: :agent}, _), do: true
-  def authorize(:assign_ticket, %User{role: :agent}, _), do: true
+  def authorize(:delegate_ticket, %User{role: :agent}, _), do: true
   def authorize(:update_ticket, %User{role: :agent}, _), do: true
   def authorize(:change_status, %User{role: :agent}, _), do: true
   def authorize(:change_priority, %User{role: :agent}, _), do: true
