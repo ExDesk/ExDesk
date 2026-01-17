@@ -52,6 +52,8 @@ defmodule ExDeskWeb do
     quote do
       use Phoenix.LiveView
 
+      import ExDeskWeb.Authorization
+
       unquote(html_helpers())
     end
   end

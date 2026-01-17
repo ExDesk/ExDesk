@@ -3,28 +3,72 @@ defmodule ExDesk.Support.Policy do
   Authorization policy for the Support context.
 
   Defines what actions each role can perform on tickets and groups.
+
+  ## Roles
+
+  - `:admin` - Full access to all resources and actions
+  - `:agent` - Can manage tickets, view groups, but cannot manage groups
+  - `:user` - Can only create tickets and interact with their own tickets
+
+  ## Usage
+
+      iex> Policy.authorize(:assign_ticket, admin_user, ticket)
+      true
+
+      iex> Policy.authorize(:assign_ticket, regular_user, ticket)
+      false
+
+  ## Integration with Bodyguard
+
+  This module implements `Bodyguard.Policy` and is used via:
+
+      Bodyguard.permit(ExDesk.Support, :action, user, resource)
   """
   @behaviour Bodyguard.Policy
 
   alias ExDesk.Accounts.User
   alias ExDesk.Support.Ticket
 
-  # ============================================================================
+  @doc """
+  Authorizes an action for a user on a given resource.
+
+  Returns `true` if the action is permitted, `false` otherwise.
+
+  ## Parameters
+
+  - `action` - The action atom (e.g., `:create_ticket`, `:assign_ticket`)
+  - `user` - The `%User{}` struct with a `:role` field
+  - `resource` - The resource being accessed (can be `nil`, a `%Ticket{}`, etc.)
+
+  ## Actions
+
+  ### Group Actions
+  - `:list_groups` - View available groups (Admin, Agent)
+  - `:create_group` - Create a new group (Admin only)
+  - `:update_group` - Update an existing group (Admin only)
+  - `:delete_group` - Delete a group (Admin only)
+
+  ### Ticket Actions
+  - `:list_all_tickets` - View all tickets (Admin, Agent)
+  - `:list_my_tickets` - View own tickets (All roles)
+  - `:view_ticket` - View a single ticket (Admin, Agent, or ticket owner)
+  - `:create_ticket` - Create a new ticket (All roles)
+  - `:update_ticket` - Update ticket fields (Admin, Agent)
+  - `:assign_ticket` - Assign ticket to an agent (Admin, Agent)
+  - `:change_status` - Change ticket status (Admin, Agent)
+  - `:change_priority` - Change ticket priority (Admin, Agent)
+  - `:add_comment` - Add a public comment (Admin, Agent, or ticket owner)
+  - `:add_internal_note` - Add an internal note (Admin, Agent)
+  """
+
   # Admin: Full access to everything
-  # ============================================================================
   def authorize(_action, %User{role: :admin}, _resource), do: true
 
-  # ============================================================================
   # Groups: Only Admin can manage
-  # ============================================================================
   def authorize(:list_groups, %User{role: role}, _) when role in [:admin, :agent], do: true
   def authorize(:create_group, _, _), do: false
   def authorize(:update_group, _, _), do: false
   def authorize(:delete_group, _, _), do: false
-
-  # ============================================================================
-  # Tickets: Agents have broad access, Users limited to their own
-  # ============================================================================
 
   # Agents can do everything with tickets
   def authorize(:list_all_tickets, %User{role: :agent}, _), do: true
@@ -49,8 +93,6 @@ defmodule ExDesk.Support.Policy do
 
   def authorize(:list_my_tickets, %User{role: :user}, _), do: true
 
-  # ============================================================================
   # Default: Deny
-  # ============================================================================
   def authorize(_action, _user, _resource), do: false
 end
