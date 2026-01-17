@@ -171,4 +171,74 @@ defmodule ExDeskWeb.Layouts do
     </div>
     """
   end
+
+  @doc """
+  Renders a layout with a side navigation specific for settings.
+  """
+  attr :flash, :map, required: true
+  attr :current_scope, :map, required: true
+  attr :active_tab, :atom, required: true
+  slot :inner_block, required: true
+
+  def settings_layout(assigns) do
+    ~H"""
+    <div class="px-4 py-8 sm:px-6 lg:px-8">
+      <div class="max-w-6xl mx-auto">
+        <div class="flex flex-col md:flex-row gap-10">
+          <!-- Settings Sidebar -->
+          <aside class="w-full md:w-64 flex-shrink-0">
+            <nav class="flex flex-col space-y-1">
+              <.settings_nav_link
+                label="Email Address"
+                icon="hero-envelope"
+                href={~p"/users/settings/email"}
+                active={@active_tab == :email}
+              />
+              <.settings_nav_link
+                label="Password & Security"
+                icon="hero-lock-closed"
+                href={~p"/users/settings/password"}
+                active={@active_tab == :password}
+              />
+              <div class="py-4"><div class="divider opacity-20" /></div>
+              
+              <p class="px-3 text-xs font-semibold text-base-content/40 uppercase tracking-wider mb-2">
+                Support
+              </p>
+              
+              <.settings_nav_link
+                label="Help Center"
+                icon="hero-question-mark-circle"
+                href="#"
+                active={false}
+              />
+            </nav>
+          </aside>
+          <!-- Settings Content -->
+          <div class="flex-1">{render_slot(@inner_block)}</div>
+        </div>
+      </div>
+    </div>
+    """
+  end
+
+  attr :label, :string, required: true
+  attr :icon, :string, required: true
+  attr :href, :string, required: true
+  attr :active, :boolean, default: false
+
+  defp settings_nav_link(assigns) do
+    ~H"""
+    <.link
+      patch={@href}
+      class={[
+        "flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors",
+        @active && "bg-primary/10 text-primary",
+        !@active && "text-base-content/70 hover:bg-base-200 hover:text-base-content"
+      ]}
+    >
+      <.icon name={@icon} class="size-4" /> <span>{@label}</span>
+    </.link>
+    """
+  end
 end

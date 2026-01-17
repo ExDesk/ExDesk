@@ -9,89 +9,103 @@ defmodule ExDeskWeb.UserLive.Settings do
   def render(assigns) do
     ~H"""
     <Layouts.app flash={@flash} current_scope={@current_scope}>
-      <div class="p-8 max-w-4xl mx-auto space-y-8">
-        <div class="mb-10">
-          <.header>
-            Account Settings
-            <:subtitle>Manage your account email address and password settings</:subtitle>
-          </.header>
-        </div>
-        <!-- Email Section -->
-        <div class="card bg-base-100 shadow-xl border border-base-200">
-          <div class="card-body">
-            <h3 class="card-title text-lg font-bold mb-4">Change Email</h3>
-            
-            <.form
-              for={@email_form}
-              id="email_form"
-              phx-submit="update_email"
-              phx-change="validate_email"
-              class="space-y-4"
-            >
-              <.input
-                field={@email_form[:email]}
-                type="email"
-                label="Current/New Email"
-                autocomplete="username"
-                required
-                class="input input-bordered w-full"
-              />
-              <div class="card-actions justify-start mt-2">
-                <.button variant="primary" phx-disable-with="Changing..." class="btn btn-primary">
-                  Change Email
-                </.button>
-              </div>
-            </.form>
+      <Layouts.settings_layout
+        flash={@flash}
+        current_scope={@current_scope}
+        active_tab={@active_tab}
+      >
+        <%= if @active_tab == :email do %>
+          <!-- Email Section -->
+          <div class="card bg-base-100 shadow-xl border border-base-200">
+            <div class="card-body">
+              <h3 class="card-title text-lg font-bold mb-4">Change Email</h3>
+              
+              <.form
+                for={@email_form}
+                id="email_form"
+                phx-submit="update_email"
+                phx-change="validate_email"
+                class="space-y-4"
+              >
+                <.input
+                  field={@email_form[:email]}
+                  type="email"
+                  label="Current/New Email"
+                  autocomplete="username"
+                  required
+                  class="input input-bordered w-full"
+                />
+                <div class="card-actions justify-start mt-2">
+                  <.button variant="primary" phx-disable-with="Changing..." class="btn btn-primary">
+                    Change Email
+                  </.button>
+                </div>
+              </.form>
+            </div>
           </div>
-        </div>
-        <!-- Password Section -->
-        <div class="card bg-base-100 shadow-xl border border-base-200">
-          <div class="card-body">
-            <h3 class="card-title text-lg font-bold mb-4">Update Password</h3>
-            
-            <.form
-              for={@password_form}
-              id="password_form"
-              action={~p"/users/update-password"}
-              method="post"
-              phx-change="validate_password"
-              phx-submit="update_password"
-              phx-trigger-action={@trigger_submit}
-              class="space-y-4"
-            >
-              <input
-                name={@password_form[:email].name}
-                type="hidden"
-                id="hidden_user_email"
-                autocomplete="username"
-                value={@current_email}
-              />
-              <.input
-                field={@password_form[:password]}
-                type="password"
-                label="New password"
-                autocomplete="new-password"
-                required
-                class="input input-bordered w-full"
-              />
-              <.input
-                field={@password_form[:password_confirmation]}
-                type="password"
-                label="Confirm new password"
-                autocomplete="new-password"
-                class="input input-bordered w-full"
-              />
-              <div class="card-actions justify-start mt-2">
-                <.button variant="primary" phx-disable-with="Saving..." class="btn btn-primary">
-                  Save Password
-                </.button>
-              </div>
-            </.form>
+        <% end %>
+        
+        <%= if @active_tab == :password do %>
+          <!-- Password Section -->
+          <div class="card bg-base-100 shadow-xl border border-base-200">
+            <div class="card-body">
+              <h3 class="card-title text-lg font-bold mb-4">Update Password</h3>
+              
+              <.form
+                for={@password_form}
+                id="password_form"
+                action={~p"/users/update-password"}
+                method="post"
+                phx-change="validate_password"
+                phx-submit="update_password"
+                phx-trigger-action={@trigger_submit}
+                class="space-y-4"
+              >
+                <input
+                  name={@password_form[:email].name}
+                  type="hidden"
+                  id="hidden_user_email"
+                  autocomplete="username"
+                  value={@current_email}
+                />
+                <.input
+                  field={@password_form[:password]}
+                  type="password"
+                  label="New password"
+                  autocomplete="new-password"
+                  required
+                  class="input input-bordered w-full"
+                />
+                <.input
+                  field={@password_form[:password_confirmation]}
+                  type="password"
+                  label="Confirm new password"
+                  autocomplete="new-password"
+                  class="input input-bordered w-full"
+                />
+                <div class="card-actions justify-start mt-2">
+                  <.button variant="primary" phx-disable-with="Saving..." class="btn btn-primary">
+                    Save Password
+                  </.button>
+                </div>
+              </.form>
+            </div>
           </div>
-        </div>
-      </div>
+        <% end %>
+      </Layouts.settings_layout>
     </Layouts.app>
     """
+  end
+
+  @impl true
+  def handle_params(params, _url, socket) do
+    tab =
+      case params["tab"] do
+        "password" -> :password
+        _ -> :email
+      end
+
+    {:noreply, assign(socket, active_tab: tab)}
   end
 
   @impl true
