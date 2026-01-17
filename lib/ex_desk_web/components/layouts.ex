@@ -52,12 +52,15 @@ defmodule ExDeskWeb.Layouts do
         <.sidebar_link icon="hero-users" label="Users" href={~p"/dashboard"} />
         <.sidebar_link icon="hero-chart-bar" label="Reports" href={~p"/dashboard"} />
         <div class="divider my-4 text-xs text-base-content/50">Administration</div>
-         <.sidebar_link icon="hero-cog-6-tooth" label="Settings" href={~p"/users/settings"} />
+         <.sidebar_link icon="hero-user-circle" label="Account" href={~p"/users/profile"} />
       </nav>
       <!-- User Section -->
       <div :if={@current_scope} class="p-4 border-t border-base-300">
-        <div class="flex items-center gap-3 p-3 rounded-xl bg-base-200/50">
-          <div class="avatar placeholder">
+        <.link
+          navigate={~p"/users/profile"}
+          class="flex items-center gap-3 p-3 rounded-xl bg-base-200/50 hover:bg-base-200 transition-colors group"
+        >
+          <div class="avatar placeholder group-hover:scale-105 transition-transform">
             <div class="bg-gradient-to-br from-purple-500 to-indigo-600 text-white rounded-full w-10">
               <span class="text-sm font-bold">
                 {String.first(@current_scope.user.email) |> String.upcase()}
@@ -76,7 +79,7 @@ defmodule ExDeskWeb.Layouts do
               Sign out
             </.link>
           </div>
-        </div>
+        </.link>
       </div>
     </aside>
     """
@@ -169,76 +172,6 @@ defmodule ExDeskWeb.Layouts do
         <.icon name="hero-moon-micro" class="size-4 opacity-75 hover:opacity-100" />
       </button>
     </div>
-    """
-  end
-
-  @doc """
-  Renders a layout with a side navigation specific for settings.
-  """
-  attr :flash, :map, required: true
-  attr :current_scope, :map, required: true
-  attr :active_tab, :atom, required: true
-  slot :inner_block, required: true
-
-  def settings_layout(assigns) do
-    ~H"""
-    <div class="px-4 py-8 sm:px-6 lg:px-8">
-      <div class="max-w-6xl mx-auto">
-        <div class="flex flex-col md:flex-row gap-10">
-          <!-- Settings Sidebar -->
-          <aside class="w-full md:w-64 flex-shrink-0">
-            <nav class="flex flex-col space-y-1">
-              <.settings_nav_link
-                label="Email Address"
-                icon="hero-envelope"
-                href={~p"/users/settings/email"}
-                active={@active_tab == :email}
-              />
-              <.settings_nav_link
-                label="Password & Security"
-                icon="hero-lock-closed"
-                href={~p"/users/settings/password"}
-                active={@active_tab == :password}
-              />
-              <div class="py-4"><div class="divider opacity-20" /></div>
-              
-              <p class="px-3 text-xs font-semibold text-base-content/40 uppercase tracking-wider mb-2">
-                Support
-              </p>
-              
-              <.settings_nav_link
-                label="Help Center"
-                icon="hero-question-mark-circle"
-                href="#"
-                active={false}
-              />
-            </nav>
-          </aside>
-          <!-- Settings Content -->
-          <div class="flex-1">{render_slot(@inner_block)}</div>
-        </div>
-      </div>
-    </div>
-    """
-  end
-
-  attr :label, :string, required: true
-  attr :icon, :string, required: true
-  attr :href, :string, required: true
-  attr :active, :boolean, default: false
-
-  defp settings_nav_link(assigns) do
-    ~H"""
-    <.link
-      patch={@href}
-      class={[
-        "flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors",
-        @active && "bg-primary/10 text-primary",
-        !@active && "text-base-content/70 hover:bg-base-200 hover:text-base-content"
-      ]}
-    >
-      <.icon name={@icon} class="size-4" /> <span>{@label}</span>
-    </.link>
     """
   end
 end

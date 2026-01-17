@@ -148,6 +148,38 @@ defmodule ExDesk.Accounts do
   end
 
   @doc """
+  Returns an `%Ecto.Changeset{}` for changing the user profile.
+  """
+  def change_user_profile(user, attrs \\ %{}) do
+    User.profile_changeset(user, attrs)
+  end
+
+  @doc """
+  Updates the user profile.
+  """
+  def update_user_profile(user, attrs) do
+    user
+    |> User.profile_changeset(attrs)
+    |> Repo.update()
+  end
+
+  @doc """
+  Returns an `%Ecto.Changeset{}` for changing the user preferences.
+  """
+  def change_user_preferences(user, attrs \\ %{}) do
+    User.preferences_changeset(user, attrs)
+  end
+
+  @doc """
+  Updates the user preferences.
+  """
+  def update_user_preferences(user, attrs) do
+    user
+    |> User.preferences_changeset(attrs)
+    |> Repo.update()
+  end
+
+  @doc """
   Updates the user password.
 
   Returns a tuple with the updated user, as well as a list of expired tokens.
