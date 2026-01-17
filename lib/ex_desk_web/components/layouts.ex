@@ -37,9 +37,9 @@ defmodule ExDeskWeb.Layouts do
     ~H"""
     <aside class="w-64 bg-base-100 border-r border-base-300 flex flex-col shadow-lg">
       <!-- Logo / Brand -->
-      <div class="p-6 border-b border-base-300">
-        <.link navigate={~p"/dashboard"} class="flex items-center gap-3">
-          <span class="text-xl font-bold tracking-tight">
+      <div class="p-8 border-b border-base-300 flex flex-col items-center">
+        <.link navigate={~p"/dashboard"} class="flex flex-col items-center gap-2 text-center group">
+          <span class="text-4xl font-black tracking-tighter hover:scale-105 transition-transform duration-300">
             <span class="text-transparent bg-clip-text bg-gradient-to-r from-purple-500 to-indigo-600">Ex</span>Desk
           </span>
         </.link>
@@ -64,10 +64,10 @@ defmodule ExDeskWeb.Layouts do
               </span>
             </div>
           </div>
-
+          
           <div class="flex-1 min-w-0">
             <p class="text-sm font-medium text-base-content truncate">{@current_scope.user.email}</p>
-
+            
             <.link
               href={~p"/users/log-out"}
               method="delete"
@@ -121,7 +121,7 @@ defmodule ExDeskWeb.Layouts do
         {gettext("Attempting to reconnect...")}
         <.icon name="hero-arrow-path" class="ml-1 size-3 motion-safe:animate-spin" />
       </.flash>
-
+      
       <.flash
         id="server-error"
         kind={:error}
