@@ -17,8 +17,7 @@ defmodule ExDeskWeb.UserLive.Login do
       <div class="hidden lg:flex w-1/2 bg-zinc-900 relative flex-col items-center justify-center p-12 text-white overflow-hidden">
         <div class="absolute inset-0 bg-gradient-to-br from-purple-900/30 to-blue-900/10 pointer-events-none">
         </div>
-        
-    <!-- Background Pattern -->
+        <!-- Background Pattern -->
         <div class="absolute inset-0 z-0 opacity-10 pointer-events-none select-none">
           <img
             src={~p"/images/login-bg.png"}
@@ -26,22 +25,31 @@ defmodule ExDeskWeb.UserLive.Login do
             alt=""
           />
         </div>
-
+        
         <div class="relative z-10 flex flex-col items-center max-w-lg text-center">
-          <img src={~p"/images/logo.svg"} alt="ExDesk Logo" class="h-24 w-auto mb-8 drop-shadow-2xl" />
-          <h1 class="text-5xl font-bold tracking-tight mb-4 text-white">
-            ExDesk
+          <h1 class="text-6xl font-black tracking-tighter mb-4 text-white drop-shadow-lg">
+            <span class="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-purple-200">Ex</span>Desk
           </h1>
+          
           <div class="font-mono text-lg sm:text-xl text-zinc-300 bg-zinc-800/50 px-6 py-4 rounded-xl border border-zinc-700/50 backdrop-blur-sm shadow-2xl mt-4">
-            <span class="text-purple-400">IT_Issues</span>
-            <span class="text-zinc-500 mx-2">|&gt;</span>
-            <span class="text-white font-bold">ExDesk</span>
-            <span class="text-zinc-500 mx-2">|&gt;</span>
-            <span class="text-green-400">Solved</span>
+            <span class="text-purple-400 animate-pipeline-appear" style="animation-delay: 100ms">
+              IT_Issues
+            </span>
+            <span class="text-zinc-500 mx-2 animate-pipeline-appear" style="animation-delay: 300ms">
+              |&gt;
+            </span>
+            <span class="text-white font-bold animate-pipeline-appear" style="animation-delay: 500ms">
+              ExDesk
+            </span>
+            <span class="text-zinc-500 mx-2 animate-pipeline-appear" style="animation-delay: 700ms">
+              |&gt;
+            </span>
+            <span class="text-green-400 animate-pipeline-appear" style="animation-delay: 900ms">
+              Solved
+            </span>
           </div>
         </div>
-        
-    <!-- Decoration -->
+        <!-- Decoration -->
         <div class="absolute bottom-0 left-0 w-full h-1/3 bg-gradient-to-t from-zinc-900/80 to-transparent">
         </div>
       </div>
@@ -49,14 +57,9 @@ defmodule ExDeskWeb.UserLive.Login do
       <div class="w-full lg:w-1/2 flex flex-col justify-center px-8 py-12 sm:px-12 lg:px-24 bg-white dark:bg-base-100 relative">
         <div class="mx-auto w-full max-w-md">
           <!-- Logo for Mobile/Form Context -->
-          <div class="flex justify-center mb-8">
-            <img src={~p"/images/logo.svg"} alt="ExDesk Logo" class="h-12 w-auto" />
-          </div>
-
           <div class="text-center mb-12">
-            <h2 class="text-3xl font-bold text-base-content tracking-tight">
-              Welcome back
-            </h2>
+            <h2 class="text-3xl font-bold text-base-content tracking-tight">Welcome back</h2>
+            
             <div class="mt-3 text-base text-base-content/70">
               <%= if @current_scope do %>
                 Please reauthenticate to continue.
@@ -65,17 +68,18 @@ defmodule ExDeskWeb.UserLive.Login do
               <% end %>
             </div>
           </div>
-
+          
           <div :if={local_mail_adapter?()} class="alert alert-info mb-8 shadow-sm">
             <.icon name="hero-information-circle" class="size-6 shrink-0" />
             <div>
               <p class="font-bold">Local Mail Adapter</p>
+              
               <p class="text-sm">
                 Visit <.link href="/dev/mailbox" class="underline">mailbox</.link> to see emails.
               </p>
             </div>
           </div>
-
+          
           <div class="space-y-8">
             <.form
               :let={f}
@@ -96,7 +100,6 @@ defmodule ExDeskWeb.UserLive.Login do
                 phx-mounted={JS.focus()}
                 class="input input-bordered input-lg w-full focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/50 rounded-xl bg-gray-50 dark:bg-zinc-900/50"
               />
-
               <.input
                 field={@form[:password]}
                 type="password"
@@ -104,7 +107,6 @@ defmodule ExDeskWeb.UserLive.Login do
                 autocomplete="current-password"
                 class="input input-bordered input-lg w-full focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/50 rounded-xl bg-gray-50 dark:bg-zinc-900/50"
               />
-
               <div class="flex items-center justify-between">
                 <div class="flex items-center">
                   <input
@@ -122,7 +124,7 @@ defmodule ExDeskWeb.UserLive.Login do
                   </label>
                 </div>
               </div>
-
+              
               <div class="pt-2 space-y-4">
                 <button
                   type="submit"
@@ -133,18 +135,18 @@ defmodule ExDeskWeb.UserLive.Login do
                 >
                   Sign in <span aria-hidden="true">→</span>
                 </button>
-
                 <div class="relative py-2">
                   <div class="absolute inset-0 flex items-center">
                     <div class="w-full border-t border-base-300"></div>
                   </div>
+                  
                   <div class="relative flex justify-center text-sm">
                     <span class="px-2 bg-white dark:bg-base-100 text-base-content/50 text-xs">
                       or
                     </span>
                   </div>
                 </div>
-
+                
                 <button
                   type="submit"
                   name="action"
@@ -158,7 +160,7 @@ defmodule ExDeskWeb.UserLive.Login do
             </.form>
           </div>
         </div>
-
+        
         <div class="absolute bottom-6 left-0 w-full text-center">
           <p class="text-xs text-base-content/40 font-medium">
             © 2026 ExDesk Inc. • Privacy Policy • Terms of Service • Help Center
