@@ -6,6 +6,7 @@ defmodule ExDesk.Accounts.User do
     field :email, :string
     field :password, :string, virtual: true, redact: true
     field :hashed_password, :string, redact: true
+    field :role, Ecto.Enum, values: [:user, :agent, :admin], default: :user
     field :confirmed_at, :utc_datetime
     field :authenticated_at, :utc_datetime, virtual: true
 
@@ -25,7 +26,7 @@ defmodule ExDesk.Accounts.User do
   """
   def email_changeset(user, attrs, opts \\ []) do
     user
-    |> cast(attrs, [:email])
+    |> cast(attrs, [:email, :role])
     |> validate_email(opts)
   end
 
