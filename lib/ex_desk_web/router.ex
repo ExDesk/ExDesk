@@ -38,6 +38,8 @@ defmodule ExDeskWeb.Router do
       on_mount: [{ExDeskWeb.UserAuth, :require_authenticated}] do
       live "/users/settings", UserLive.Settings, :edit
       live "/users/settings/confirm_email/:token", UserLive.Settings, :confirm_email
+      live "/users/profile", UserLive.Account, :profile
+      live "/users/preferences", UserLive.Account, :preferences
       live "/dashboard", DashboardLive, :index
     end
 

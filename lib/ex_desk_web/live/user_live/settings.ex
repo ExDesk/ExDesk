@@ -4,18 +4,20 @@ defmodule ExDeskWeb.UserLive.Settings do
   on_mount {ExDeskWeb.UserAuth, :require_sudo_mode}
 
   alias ExDesk.Accounts
+  import ExDeskWeb.UserLive.AccountComponents
 
   @impl true
   def render(assigns) do
     ~H"""
     <Layouts.app flash={@flash} current_scope={@current_scope}>
       <div class="p-8 max-w-4xl mx-auto space-y-8">
-        <div class="mb-10">
+        <div>
           <.header>
-            Account Settings
-            <:subtitle>Manage your account email address and password settings</:subtitle>
+            Account & Security
+            <:subtitle>Manage your session credentials and security settings.</:subtitle>
           </.header>
         </div>
+         <.account_nav current_page={:settings} />
         <!-- Email Section -->
         <div class="card bg-base-100 shadow-xl border border-base-200">
           <div class="card-body">

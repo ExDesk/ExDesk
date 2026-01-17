@@ -143,4 +143,22 @@ defmodule ExDesk.Accounts.User do
     Pbkdf2.no_user_verify()
     false
   end
+
+  @doc """
+  A user changeset for changing profile attributes.
+  """
+  def profile_changeset(user, attrs) do
+    user
+    |> cast(attrs, [:name, :phone, :avatar_url, :job_title, :department, :employee_number, :notes])
+    |> validate_required([:name])
+  end
+
+  @doc """
+  A user changeset for changing preferences.
+  """
+  def preferences_changeset(user, attrs) do
+    user
+    |> cast(attrs, [:time_zone, :locale])
+    |> validate_required([:time_zone, :locale])
+  end
 end

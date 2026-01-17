@@ -52,12 +52,15 @@ defmodule ExDeskWeb.Layouts do
         <.sidebar_link icon="hero-users" label="Users" href={~p"/dashboard"} />
         <.sidebar_link icon="hero-chart-bar" label="Reports" href={~p"/dashboard"} />
         <div class="divider my-4 text-xs text-base-content/50">Administration</div>
-         <.sidebar_link icon="hero-cog-6-tooth" label="Settings" href={~p"/users/settings"} />
+         <.sidebar_link icon="hero-user-circle" label="Account" href={~p"/users/profile"} />
       </nav>
       <!-- User Section -->
       <div :if={@current_scope} class="p-4 border-t border-base-300">
-        <div class="flex items-center gap-3 p-3 rounded-xl bg-base-200/50">
-          <div class="avatar placeholder">
+        <.link
+          navigate={~p"/users/profile"}
+          class="flex items-center gap-3 p-3 rounded-xl bg-base-200/50 hover:bg-base-200 transition-colors group"
+        >
+          <div class="avatar placeholder group-hover:scale-105 transition-transform">
             <div class="bg-gradient-to-br from-purple-500 to-indigo-600 text-white rounded-full w-10">
               <span class="text-sm font-bold">
                 {String.first(@current_scope.user.email) |> String.upcase()}
@@ -76,7 +79,7 @@ defmodule ExDeskWeb.Layouts do
               Sign out
             </.link>
           </div>
-        </div>
+        </.link>
       </div>
     </aside>
     """
