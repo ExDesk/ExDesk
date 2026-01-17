@@ -76,11 +76,11 @@ defmodule ExDeskWeb.UserLive.LoginTest do
           action: "magic"
         )
 
-      conn = submit_form(form, conn)
+      render_submit(form)
 
-      assert Phoenix.Flash.get(conn.assigns.flash, :info) =~ "receive instructions"
-      assert redirected_to(conn) == ~p"/users/log-in"
-      assert_email_delivered_with(to: [user.email])
+      flash = assert_redirected(lv, ~p"/users/log-in")
+      assert flash["info"] =~ "receive instructions"
+      Swoosh.TestAssertions.assert_email_sent(to: [user.email])
     end
 
     test "sends magic link (no-op) if email is invalid", %{conn: conn} do
@@ -92,11 +92,11 @@ defmodule ExDeskWeb.UserLive.LoginTest do
           action: "magic"
         )
 
-      conn = submit_form(form, conn)
+      render_submit(form)
 
-      assert Phoenix.Flash.get(conn.assigns.flash, :info) =~ "receive instructions"
-      assert redirected_to(conn) == ~p"/users/log-in"
-      refute_email_delivered()
+      flash = assert_redirected(lv, ~p"/users/log-in")
+      assert flash["info"] =~ "receive instructions"
+      Swoosh.TestAssertions.refute_email_sent()
     end
   end
 end
