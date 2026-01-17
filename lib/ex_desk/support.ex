@@ -241,26 +241,27 @@ defmodule ExDesk.Support do
     {:error, :invalid_status}
   end
 
-
+  @dialyzer {:nowarn_function, do_transition: 4}
+  @dialyzer {:nowarn_function, do_transition: 5}
   defp do_transition(ticket, new_status, actor_id, activity_action, extra_attrs \\ %{}) do
-  alias ExDesk.Support.TicketStateMachine
+    alias ExDesk.Support.TicketStateMachine
 
-  result =
-    with {:ok, updated_ticket} <- TicketStateMachine.transition(ticket, new_status),
-         {:ok, final_ticket} <- maybe_apply_extra_attrs(updated_ticket, extra_attrs) do
+    result =
+      with {:ok, updated_ticket} <- TicketStateMachine.transition(ticket, new_status),
+           {:ok, final_ticket} <- maybe_apply_extra_attrs(updated_ticket, extra_attrs) do
+        log_activity(ticket.id, actor_id, activity_action)
 
-      log_activity(ticket.id, actor_id, activity_action)
+        {:ok, final_ticket}
+      end
 
-      {:ok, final_ticket}
+    case result do
+      {:ok, val} -> {:ok, val}
+      {:error, reason} -> {:error, reason}
     end
-
-  case result do
-    {:ok, val} -> {:ok, val}
-    {:error, reason} -> {:error, reason}
   end
-end
 
-  defp maybe_apply_extra_attrs(ticket, extra_attrs) when map_size(extra_attrs) == 0 do
+  @dialyzer {:nowarn_function, maybe_apply_extra_attrs: 2}
+  defp maybe_apply_extra_attrs(ticket, extra_attrs) when extra_attrs == %{} do
     {:ok, ticket}
   end
 

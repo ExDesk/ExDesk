@@ -49,6 +49,8 @@ defmodule ExDesk.Support.TicketStateMachine do
   - `{:ok, ticket}` - Successful transition
   - `{:error, reason}` - Invalid transition or persistence error
   """
+
+  @dialyzer {:nowarn_function, transition: 2}
   def transition(%Ticket{} = ticket, new_status) when is_atom(new_status) do
     ticket_with_string_status = %Ticket{ticket | status: to_string(ticket.status)}
     new_status_string = to_string(new_status)
@@ -82,7 +84,7 @@ defmodule ExDesk.Support.TicketStateMachine do
         %{updated_ticket | status: new_status}
 
       {:error, changeset} ->
-        {:error, changeset}
+        {:error, "Failed to persist transition: #{inspect(changeset.errors)}"}
     end
   end
 

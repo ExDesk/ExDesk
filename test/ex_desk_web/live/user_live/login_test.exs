@@ -71,32 +71,26 @@ defmodule ExDeskWeb.UserLive.LoginTest do
       {:ok, lv, _html} = live(conn, ~p"/users/log-in")
 
       form =
-        form(lv, "#login_form",
-          user: %{email: user.email},
-          action: "magic"
-        )
+        form(lv, "#login_form", user: %{email: user.email})
 
-      render_submit(form)
+      render_submit(form, %{"action" => "magic"})
 
       flash = assert_redirected(lv, ~p"/users/log-in")
       assert flash["info"] =~ "receive instructions"
-      Swoosh.TestAssertions.assert_email_sent(to: [user.email])
+      assert_email_sent(to: [user.email])
     end
 
     test "sends magic link (no-op) if email is invalid", %{conn: conn} do
       {:ok, lv, _html} = live(conn, ~p"/users/log-in")
 
       form =
-        form(lv, "#login_form",
-          user: %{email: "unknown@example.com"},
-          action: "magic"
-        )
+        form(lv, "#login_form", user: %{email: "unknown@example.com"})
 
-      render_submit(form)
+      render_submit(form, %{"action" => "magic"})
 
       flash = assert_redirected(lv, ~p"/users/log-in")
       assert flash["info"] =~ "receive instructions"
-      Swoosh.TestAssertions.refute_email_sent()
+      refute_email_sent()
     end
   end
 end

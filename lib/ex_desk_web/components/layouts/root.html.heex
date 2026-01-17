@@ -7,10 +7,11 @@
     <.live_title default="ExDesk" suffix=" · Phoenix Framework">
       {assigns[:page_title]}
     </.live_title>
-    <link rel="icon" href={~p"/images/icon.png"} type="image/png" />
+     <link rel="icon" href={~p"/images/icon.png"} type="image/png" />
     <link phx-track-static rel="stylesheet" href={~p"/assets/css/app.css"} />
     <script defer phx-track-static type="text/javascript" src={~p"/assets/js/app.js"}>
     </script>
+    
     <script>
       (() => {
         const setTheme = (theme) => {
@@ -31,20 +32,6 @@
       })();
     </script>
   </head>
-  <body>
-    <%= if @current_scope do %>
-      <ul class="menu menu-horizontal w-full relative z-10 flex items-center gap-4 px-4 sm:px-6 lg:px-8 justify-end">
-        <li>
-          {@current_scope.user.email}
-        </li>
-        <li>
-          <.link href={~p"/users/settings"}>Settings</.link>
-        </li>
-        <li>
-          <.link href={~p"/users/log-out"} method="delete">Log out</.link>
-        </li>
-      </ul>
-    <% end %>
-    {@inner_content}
-  </body>
+  
+  <body>{@inner_content}</body>
 </html>
