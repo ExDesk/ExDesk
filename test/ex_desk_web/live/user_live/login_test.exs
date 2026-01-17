@@ -3,6 +3,7 @@ defmodule ExDeskWeb.UserLive.LoginTest do
 
   import Phoenix.LiveViewTest
   import ExDesk.AccountsFixtures
+  import Swoosh.TestAssertions
 
   describe "login page" do
     test "renders login page", %{conn: conn} do
@@ -70,32 +71,26 @@ defmodule ExDeskWeb.UserLive.LoginTest do
       {:ok, lv, _html} = live(conn, ~p"/users/log-in")
 
       form =
-        form(lv, "#login_form",
-          user: %{email: user.email},
-          action: "magic"
-        )
+        form(lv, "#login_form", user: %{email: user.email})
 
-      conn = submit_form(form, conn)
+      render_submit(form, %{"action" => "magic"})
 
-      assert Phoenix.Flash.get(conn.assigns.flash, :info) =~ "receive instructions"
-      assert redirected_to(conn) == ~p"/users/log-in"
-      assert_email_delivered_with(to: [user.email])
+      flash = assert_redirected(lv, ~p"/users/log-in")
+      assert flash["info"] =~ "receive instructions"
+      assert_email_sent(to: [user.email])
     end
 
     test "sends magic link (no-op) if email is invalid", %{conn: conn} do
       {:ok, lv, _html} = live(conn, ~p"/users/log-in")
 
       form =
-        form(lv, "#login_form",
-          user: %{email: "unknown@example.com"},
-          action: "magic"
-        )
+        form(lv, "#login_form", user: %{email: "unknown@example.com"})
 
-      conn = submit_form(form, conn)
+      render_submit(form, %{"action" => "magic"})
 
-      assert Phoenix.Flash.get(conn.assigns.flash, :info) =~ "receive instructions"
-      assert redirected_to(conn) == ~p"/users/log-in"
-      refute_email_delivered()
+      flash = assert_redirected(lv, ~p"/users/log-in")
+      assert flash["info"] =~ "receive instructions"
+      refute_email_sent()
     end
   end
 end

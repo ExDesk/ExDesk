@@ -20,8 +20,83 @@ defmodule ExDeskWeb.Layouts do
 
   def app(assigns) do
     ~H"""
-    <main class="min-h-screen">{render_slot(@inner_block)}</main>
+    <div class="flex min-h-screen bg-base-200">
+      <.sidebar current_scope={@current_scope} />
+      <main class="flex-1 overflow-auto">{render_slot(@inner_block)}</main>
+    </div>
      <.flash_group flash={@flash} />
+    """
+  end
+
+  @doc """
+  Renders the application sidebar with navigation.
+  """
+  attr :current_scope, :map, default: nil
+
+  def sidebar(assigns) do
+    ~H"""
+    <aside class="w-64 bg-base-100 border-r border-base-300 flex flex-col shadow-lg">
+      <!-- Logo / Brand -->
+      <div class="p-8 border-b border-base-300 flex flex-col items-center">
+        <.link navigate={~p"/dashboard"} class="flex flex-col items-center gap-2 text-center group">
+          <span class="text-4xl font-black tracking-tighter hover:scale-105 transition-transform duration-300">
+            <span class="text-transparent bg-clip-text bg-gradient-to-r from-purple-500 to-indigo-600">Ex</span>Desk
+          </span>
+        </.link>
+      </div>
+      <!-- Navigation -->
+      <nav class="flex-1 p-4 space-y-2">
+        <.sidebar_link icon="hero-home" label="Dashboard" href={~p"/dashboard"} />
+        <.sidebar_link icon="hero-ticket" label="Tickets" href={~p"/dashboard"} badge="8" />
+        <.sidebar_link icon="hero-computer-desktop" label="Assets" href={~p"/dashboard"} />
+        <.sidebar_link icon="hero-users" label="Users" href={~p"/dashboard"} />
+        <.sidebar_link icon="hero-chart-bar" label="Reports" href={~p"/dashboard"} />
+        <div class="divider my-4 text-xs text-base-content/50">Administration</div>
+         <.sidebar_link icon="hero-cog-6-tooth" label="Settings" href={~p"/users/settings"} />
+      </nav>
+      <!-- User Section -->
+      <div :if={@current_scope} class="p-4 border-t border-base-300">
+        <div class="flex items-center gap-3 p-3 rounded-xl bg-base-200/50">
+          <div class="avatar placeholder">
+            <div class="bg-gradient-to-br from-purple-500 to-indigo-600 text-white rounded-full w-10">
+              <span class="text-sm font-bold">
+                {String.first(@current_scope.user.email) |> String.upcase()}
+              </span>
+            </div>
+          </div>
+          
+          <div class="flex-1 min-w-0">
+            <p class="text-sm font-medium text-base-content truncate">{@current_scope.user.email}</p>
+            
+            <.link
+              href={~p"/users/log-out"}
+              method="delete"
+              class="text-xs text-base-content/60 hover:text-error transition-colors"
+            >
+              Sign out
+            </.link>
+          </div>
+        </div>
+      </div>
+    </aside>
+    """
+  end
+
+  attr :icon, :string, required: true
+  attr :label, :string, required: true
+  attr :href, :string, required: true
+  attr :badge, :string, default: nil
+
+  defp sidebar_link(assigns) do
+    ~H"""
+    <.link
+      navigate={@href}
+      class="flex items-center gap-3 px-4 py-3 rounded-xl text-base-content/70 hover:bg-base-200 hover:text-base-content transition-all group"
+    >
+      <.icon name={@icon} class="size-5 group-hover:scale-110 transition-transform" />
+      <span class="flex-1 font-medium">{@label}</span>
+      <span :if={@badge} class="badge badge-primary badge-sm">{@badge}</span>
+    </.link>
     """
   end
 
