@@ -3,6 +3,7 @@ defmodule ExDeskWeb.UserLive.LoginTest do
 
   import Phoenix.LiveViewTest
   import ExDesk.AccountsFixtures
+  import Swoosh.TestAssertions
 
   describe "login page" do
     test "renders login page", %{conn: conn} do
