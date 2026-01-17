@@ -69,7 +69,7 @@ defmodule ExDeskWeb.UserLive.Settings do
   @impl true
   def mount(%{"token" => token}, _session, socket) do
     socket =
-      case Accounts.update_user_email(socket.assigns.current_scope.user, token) do
+      case Accounts.confirm_email_change(socket.assigns.current_scope.user, token) do
         {:ok, _user} ->
           put_flash(socket, :info, "Email changed successfully.")
 
@@ -118,7 +118,7 @@ defmodule ExDeskWeb.UserLive.Settings do
         Accounts.deliver_user_update_email_instructions(
           Ecto.Changeset.apply_action!(changeset, :insert),
           user.email,
-          &url(~p"/users/settings/confirm-email/#{&1}")
+          &url(~p"/users/settings/confirm_email/#{&1}")
         )
 
         info = "A link to confirm your email change has been sent to the new address."

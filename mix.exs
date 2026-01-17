@@ -66,7 +66,11 @@ defmodule ExDesk.MixProject do
       {:gettext, "~> 1.0"},
       {:jason, "~> 1.2"},
       {:dns_cluster, "~> 0.2.0"},
-      {:bandit, "~> 1.5"}
+      {:bandit, "~> 1.5"},
+      {:credo, "~> 1.7", only: [:dev, :test], runtime: false},
+      {:bodyguard, "~> 2.4"},
+      {:machinery, "~> 1.1.0"},
+      {:mix_unused, "~> 0.4", only: :dev, runtime: false}
     ]
   end
 

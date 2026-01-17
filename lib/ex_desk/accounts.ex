@@ -27,18 +27,18 @@ defmodule ExDesk.Accounts do
   end
 
   @doc """
-  Gets a user by email and password.
+  Authenticates a user by email and password.
 
   ## Examples
 
-      iex> get_user_by_email_and_password("foo@example.com", "correct_password")
+      iex> authenticate_user("foo@example.com", "correct_password")
       %User{}
 
-      iex> get_user_by_email_and_password("foo@example.com", "invalid_password")
+      iex> authenticate_user("foo@example.com", "invalid_password")
       nil
 
   """
-  def get_user_by_email_and_password(email, password)
+  def authenticate_user(email, password)
       when is_binary(email) and is_binary(password) do
     user = Repo.get_by(User, email: email)
     if User.valid_password?(user, password), do: user
@@ -112,11 +112,11 @@ defmodule ExDesk.Accounts do
   end
 
   @doc """
-  Updates the user email using the given token.
+  Confirms an email change using the given token.
 
   If the token matches, the user email is updated and the token is deleted.
   """
-  def update_user_email(user, token) do
+  def confirm_email_change(user, token) do
     context = "change:#{user.email}"
 
     Repo.transact(fn ->

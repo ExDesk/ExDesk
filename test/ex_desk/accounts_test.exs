@@ -17,21 +17,21 @@ defmodule ExDesk.AccountsTest do
     end
   end
 
-  describe "get_user_by_email_and_password/2" do
+  describe "authenticate_user/2" do
     test "does not return the user if the email does not exist" do
-      refute Accounts.get_user_by_email_and_password("unknown@example.com", "hello world!")
+      refute Accounts.authenticate_user("unknown@example.com", "hello world!")
     end
 
     test "does not return the user if the password is not valid" do
       user = user_fixture() |> set_password()
-      refute Accounts.get_user_by_email_and_password(user.email, "invalid")
+      refute Accounts.authenticate_user(user.email, "invalid")
     end
 
     test "returns the user if the email and password are valid" do
       %{id: id} = user = user_fixture() |> set_password()
 
       assert %User{id: ^id} =
-               Accounts.get_user_by_email_and_password(user.email, valid_user_password())
+               Accounts.authenticate_user(user.email, valid_user_password())
     end
   end
 
@@ -132,7 +132,7 @@ defmodule ExDesk.AccountsTest do
     end
   end
 
-  describe "update_user_email/2" do
+  describe "confirm_email_change/2" do
     setup do
       user = unconfirmed_user_fixture()
       email = unique_user_email()
@@ -146,7 +146,7 @@ defmodule ExDesk.AccountsTest do
     end
 
     test "updates the email with a valid token", %{user: user, token: token, email: email} do
-      assert {:ok, %{email: ^email}} = Accounts.update_user_email(user, token)
+      assert {:ok, %{email: ^email}} = Accounts.confirm_email_change(user, token)
       changed_user = Repo.get!(User, user.id)
       assert changed_user.email != user.email
       assert changed_user.email == email
@@ -154,7 +154,7 @@ defmodule ExDesk.AccountsTest do
     end
 
     test "does not update email with invalid token", %{user: user} do
-      assert Accounts.update_user_email(user, "oops") ==
+      assert Accounts.confirm_email_change(user, "oops") ==
                {:error, :transaction_aborted}
 
       assert Repo.get!(User, user.id).email == user.email
@@ -162,7 +162,7 @@ defmodule ExDesk.AccountsTest do
     end
 
     test "does not update email if user email changed", %{user: user, token: token} do
-      assert Accounts.update_user_email(%{user | email: "current@example.com"}, token) ==
+      assert Accounts.confirm_email_change(%{user | email: "current@example.com"}, token) ==
                {:error, :transaction_aborted}
 
       assert Repo.get!(User, user.id).email == user.email
@@ -172,7 +172,7 @@ defmodule ExDesk.AccountsTest do
     test "does not update email if token expired", %{user: user, token: token} do
       {1, nil} = Repo.update_all(UserToken, set: [inserted_at: ~N[2020-01-01 00:00:00]])
 
-      assert Accounts.update_user_email(user, token) ==
+      assert Accounts.confirm_email_change(user, token) ==
                {:error, :transaction_aborted}
 
       assert Repo.get!(User, user.id).email == user.email
@@ -237,7 +237,7 @@ defmodule ExDesk.AccountsTest do
 
       assert expired_tokens == []
       assert is_nil(user.password)
-      assert Accounts.get_user_by_email_and_password(user.email, "new valid password")
+      assert Accounts.authenticate_user(user.email, "new valid password")
     end
 
     test "deletes all tokens for the given user", %{user: user} do
