@@ -3,12 +3,33 @@ defmodule ExDesk.Accounts.User do
   import Ecto.Changeset
 
   schema "users" do
+    # Authentication
     field :email, :string
     field :password, :string, virtual: true, redact: true
     field :hashed_password, :string, redact: true
     field :role, Ecto.Enum, values: [:user, :agent, :admin], default: :user
     field :confirmed_at, :utc_datetime
     field :authenticated_at, :utc_datetime, virtual: true
+
+    # Profile
+    field :name, :string
+    field :phone, :string
+    field :avatar_url, :string
+
+    # Status
+    field :is_active, :boolean, default: true
+    field :last_sign_in_at, :utc_datetime
+
+    # Preferences
+    field :time_zone, :string, default: "America/Sao_Paulo"
+    field :locale, :string, default: "pt-BR"
+
+    field :notes, :string
+    field :employee_number, :string
+    field :job_title, :string
+    field :department, :string
+
+    belongs_to :organization, ExDesk.Organizations.Organization
 
     timestamps(type: :utc_datetime)
   end
@@ -83,10 +104,6 @@ defmodule ExDesk.Accounts.User do
     changeset
     |> validate_required([:password])
     |> validate_length(:password, min: 12, max: 72)
-    # Examples of additional password validation:
-    # |> validate_format(:password, ~r/[a-z]/, message: "at least one lower case character")
-    # |> validate_format(:password, ~r/[A-Z]/, message: "at least one upper case character")
-    # |> validate_format(:password, ~r/[!?@#$%^&*_0-9]/, message: "at least one digit or punctuation character")
     |> maybe_hash_password(opts)
   end
 
@@ -96,8 +113,6 @@ defmodule ExDesk.Accounts.User do
 
     if hash_password? && password && changeset.valid? do
       changeset
-      # Hashing could be done with `Ecto.Changeset.prepare_changes/2`, but that
-      # would keep the database transaction open longer and hurt performance.
       |> put_change(:hashed_password, Pbkdf2.hash_pwd_salt(password))
       |> delete_change(:password)
     else

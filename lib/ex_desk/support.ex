@@ -7,14 +7,10 @@ defmodule ExDesk.Support do
   import Ecto.Query, warn: false
   alias ExDesk.Repo
 
-  alias ExDesk.Support.{Group, Ticket, TicketComment, TicketActivity}
+  alias ExDesk.Support.{Group, Ticket, TicketActivity, TicketComment}
 
   # Bodyguard integration
   defdelegate authorize(action, user, params), to: ExDesk.Support.Policy
-
-  # ============================================================================
-  # Groups
-  # ============================================================================
 
   @doc """
   Returns the list of groups.
@@ -53,12 +49,8 @@ defmodule ExDesk.Support do
     Repo.delete(group)
   end
 
-  # ============================================================================
-  # Tickets
-  # ============================================================================
-
   @doc """
-  Returns the list of tickets.
+  Browses tickets with optional filters.
 
   ## Options
     * `:status` - Filter by status
@@ -66,7 +58,7 @@ defmodule ExDesk.Support do
     * `:assignee_id` - Filter by assignee
     * `:requester_id` - Filter by requester
   """
-  def list_tickets(opts \\ []) do
+  def browse_tickets(opts \\ []) do
     Ticket
     |> filter_by_status(opts[:status])
     |> filter_by_priority(opts[:priority])
@@ -93,9 +85,10 @@ defmodule ExDesk.Support do
     do: where(query, [t], t.requester_id == ^requester_id)
 
   @doc """
-  Gets a single ticket with preloaded associations.
+  Fetches a ticket by ID with preloaded associations.
+  Raises an exception if not found.
   """
-  def get_ticket!(id) do
+  def fetch_ticket!(id) do
     Ticket
     |> Repo.get!(id)
     |> Repo.preload([:requester, :assignee, :group, :comments, :activities])
@@ -122,9 +115,11 @@ defmodule ExDesk.Support do
   end
 
   @doc """
-  Updates a ticket and logs changes.
+  Edits ticket details (subject, description, tags, etc).
+  Should not be used for status transitions - use specific functions instead.
   """
-  def update_ticket(%Ticket{} = ticket, attrs, actor_id \\ nil) do
+  def edit_ticket_details(%Ticket{} = ticket, attrs, actor_id \\ nil) do
+    attrs = Map.drop(attrs, [:status, "status"])
     changeset = Ticket.update_changeset(ticket, attrs)
 
     Repo.transaction(fn ->
@@ -160,15 +155,120 @@ defmodule ExDesk.Support do
   end
 
   @doc """
-  Deletes a ticket.
+  Removes a ticket from the system.
   """
   def delete_ticket(%Ticket{} = ticket) do
     Repo.delete(ticket)
   end
 
-  # ============================================================================
-  # Comments
-  # ============================================================================
+  @doc """
+  Awaits customer reply (open -> pending).
+  Used when the agent needs more information.
+  """
+  def await_customer_reply(%Ticket{status: :open} = ticket, actor_id) do
+    do_transition(ticket, :pending, actor_id, :awaiting_reply)
+  end
+
+  def await_customer_reply(%Ticket{}, _actor_id) do
+    {:error, :invalid_status}
+  end
+
+  @doc """
+  Pauses the ticket due to an external reason (any -> on_hold).
+  Closed tickets cannot be put on hold.
+  """
+  def hold_ticket(ticket, actor_id, reason \\ nil)
+
+  def hold_ticket(%Ticket{status: status} = ticket, actor_id, reason)
+      when status not in [:closed] do
+    do_transition(ticket, :on_hold, actor_id, :held, %{hold_reason: reason})
+  end
+
+  def hold_ticket(%Ticket{status: :closed}, _actor_id, _reason) do
+    {:error, :ticket_closed}
+  end
+
+  @doc """
+  Resumes a paused ticket (on_hold -> open).
+  """
+  def resume_ticket(%Ticket{status: :on_hold} = ticket, actor_id) do
+    do_transition(ticket, :open, actor_id, :resumed)
+  end
+
+  def resume_ticket(%Ticket{}, _actor_id) do
+    {:error, :invalid_status}
+  end
+
+  @doc """
+  Resolves the ticket issue (any -> solved).
+  Records the resolution timestamp.
+  """
+  def resolve_issue(%Ticket{status: status} = ticket, actor_id)
+      when status not in [:closed, :solved] do
+    extra = %{solved_at: DateTime.utc_now()}
+    do_transition(ticket, :solved, actor_id, :resolved, extra)
+  end
+
+  def resolve_issue(%Ticket{status: :closed}, _actor_id) do
+    {:error, :ticket_closed}
+  end
+
+  def resolve_issue(%Ticket{status: :solved}, _actor_id) do
+    {:error, :already_solved}
+  end
+
+  @doc """
+  Permanently closes the ticket (solved -> closed).
+  Only administrators should call this function (check via Policy).
+  """
+  def close_ticket(%Ticket{status: :solved} = ticket, actor_id) do
+    extra = %{closed_at: DateTime.utc_now()}
+    do_transition(ticket, :closed, actor_id, :closed, extra)
+  end
+
+  def close_ticket(%Ticket{}, _actor_id) do
+    {:error, :must_be_solved_first}
+  end
+
+  @doc """
+  Reopens a ticket due to customer dissatisfaction (solved -> open).
+  """
+  def reopen_ticket(%Ticket{status: :solved} = ticket, actor_id) do
+    do_transition(ticket, :open, actor_id, :reopened)
+  end
+
+  def reopen_ticket(%Ticket{}, _actor_id) do
+    {:error, :invalid_status}
+  end
+
+
+  defp do_transition(ticket, new_status, actor_id, activity_action, extra_attrs \\ %{}) do
+  alias ExDesk.Support.TicketStateMachine
+
+  result =
+    with {:ok, updated_ticket} <- TicketStateMachine.transition(ticket, new_status),
+         {:ok, final_ticket} <- maybe_apply_extra_attrs(updated_ticket, extra_attrs) do
+
+      log_activity(ticket.id, actor_id, activity_action)
+
+      {:ok, final_ticket}
+    end
+
+  case result do
+    {:ok, val} -> {:ok, val}
+    {:error, reason} -> {:error, reason}
+  end
+end
+
+  defp maybe_apply_extra_attrs(ticket, extra_attrs) when map_size(extra_attrs) == 0 do
+    {:ok, ticket}
+  end
+
+  defp maybe_apply_extra_attrs(ticket, extra_attrs) do
+    ticket
+    |> Ecto.Changeset.change(extra_attrs)
+    |> Repo.update()
+  end
 
   @doc """
   Adds a comment to a ticket.

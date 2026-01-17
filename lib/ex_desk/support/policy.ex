@@ -49,16 +49,17 @@ defmodule ExDesk.Support.Policy do
   - `:delete_group` - Delete a group (Admin only)
 
   ### Ticket Actions
-  - `:list_all_tickets` - View all tickets (Admin, Agent)
+  - `:view_queue` - View all tickets in the queue (Admin, Agent)
   - `:list_my_tickets` - View own tickets (All roles)
   - `:view_ticket` - View a single ticket (Admin, Agent, or ticket owner)
   - `:create_ticket` - Create a new ticket (All roles)
-  - `:update_ticket` - Update ticket fields (Admin, Agent)
-  - `:delegate_ticket` - Delegate ticket to an agent (Admin, Agent)
-  - `:change_status` - Change ticket status (Admin, Agent)
-  - `:change_priority` - Change ticket priority (Admin, Agent)
+  - `:edit_ticket_details` - Edit ticket fields (Admin, Agent)
+  - `:assign_ticket` - Assign ticket to an agent (Admin, Agent)
+  - `:transition_ticket` - Change ticket status (Admin, Agent)
+  - `:escalate_ticket` - Change ticket priority (Admin, Agent)
   - `:add_comment` - Add a public comment (Admin, Agent, or ticket owner)
-  - `:add_internal_note` - Add an internal note (Admin, Agent)
+  - `:annotate_internally` - Add an internal note (Admin, Agent)
+  - `:close_ticket` - Close a solved ticket (Admin only)
   """
 
   # Admin: Full access to everything
@@ -70,19 +71,16 @@ defmodule ExDesk.Support.Policy do
   def authorize(:update_group, _, _), do: false
   def authorize(:delete_group, _, _), do: false
 
-  # Agents can do everything with tickets
-  def authorize(:list_all_tickets, %User{role: :agent}, _), do: true
+  def authorize(:view_queue, %User{role: :agent}, _), do: true
   def authorize(:view_ticket, %User{role: :agent}, _), do: true
-  def authorize(:delegate_ticket, %User{role: :agent}, _), do: true
-  def authorize(:update_ticket, %User{role: :agent}, _), do: true
-  def authorize(:change_status, %User{role: :agent}, _), do: true
-  def authorize(:change_priority, %User{role: :agent}, _), do: true
-  def authorize(:add_internal_note, %User{role: :agent}, _), do: true
-
-  # Users can create tickets
+  def authorize(:assign_ticket, %User{role: :agent}, _), do: true
+  def authorize(:edit_ticket_details, %User{role: :agent}, _), do: true
+  def authorize(:transition_ticket, %User{role: :agent}, _), do: true
+  def authorize(:escalate_ticket, %User{role: :agent}, _), do: true
+  def authorize(:annotate_internally, %User{role: :agent}, _), do: true
+  def authorize(:close_ticket, %User{role: :agent}, _), do: false
   def authorize(:create_ticket, %User{role: :user}, _), do: true
 
-  # Users can only view/comment on their own tickets
   def authorize(:view_ticket, %User{role: :user, id: user_id}, %Ticket{requester_id: requester_id})
       when user_id == requester_id,
       do: true
@@ -93,6 +91,5 @@ defmodule ExDesk.Support.Policy do
 
   def authorize(:list_my_tickets, %User{role: :user}, _), do: true
 
-  # Default: Deny
   def authorize(_action, _user, _resource), do: false
 end
