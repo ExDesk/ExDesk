@@ -15,7 +15,14 @@ defmodule ExDeskWeb.UserLive.Login do
     <div class="flex min-h-screen w-full">
       <!-- Left Side (Branding) -->
       <div class="hidden lg:flex w-1/2 bg-zinc-900 relative flex-col items-center justify-center p-12 text-white overflow-hidden">
+        <!-- Gradient overlay -->
         <div class="absolute inset-0 bg-gradient-to-br from-purple-900/30 to-blue-900/10 pointer-events-none">
+        </div>
+        <!-- Grain/Noise texture overlay -->
+        <div
+          class="absolute inset-0 opacity-[0.15] pointer-events-none"
+          style="background-image: url('data:image/svg+xml,%3Csvg viewBox=%270 0 256 256%27 xmlns=%27http://www.w3.org/2000/svg%27%3E%3Cfilter id=%27noise%27%3E%3CfeTurbulence type=%27fractalNoise%27 baseFrequency=%270.8%27 numOctaves=%274%27 stitchTiles=%27stitch%27/%3E%3C/filter%3E%3Crect width=%27100%25%27 height=%27100%25%27 filter=%27url(%23noise)%27/%3E%3C/svg%3E');"
+        >
         </div>
         <!-- Background Pattern -->
         <div class="absolute inset-0 z-0 opacity-10 pointer-events-none select-none">
@@ -27,26 +34,65 @@ defmodule ExDeskWeb.UserLive.Login do
         </div>
         
         <div class="relative z-10 flex flex-col items-center max-w-lg text-center">
-          <h1 class="text-6xl font-black tracking-tighter mb-4 text-white drop-shadow-lg">
+          <h1 class="text-6xl font-black tracking-tighter mb-2 text-white drop-shadow-lg">
             <span class="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-purple-200">Ex</span>Desk
           </h1>
           
-          <div class="font-mono text-lg sm:text-xl text-zinc-300 bg-zinc-800/50 px-6 py-4 rounded-xl border border-zinc-700/50 backdrop-blur-sm shadow-2xl mt-4">
-            <span class="text-purple-400 animate-pipeline-appear" style="animation-delay: 100ms">
-              IT_Issues
-            </span>
-            <span class="text-zinc-500 mx-2 animate-pipeline-appear" style="animation-delay: 300ms">
-              |&gt;
-            </span>
-            <span class="text-white font-bold animate-pipeline-appear" style="animation-delay: 500ms">
-              ExDesk
-            </span>
-            <span class="text-zinc-500 mx-2 animate-pipeline-appear" style="animation-delay: 700ms">
-              |&gt;
-            </span>
-            <span class="text-green-400 animate-pipeline-appear" style="animation-delay: 900ms">
-              Solved
-            </span>
+          <p class="text-zinc-400 text-sm font-medium tracking-wide mb-8">
+            IT Service Management, Simplified
+          </p>
+          <!-- Code Editor Frame -->
+          <div class="w-full max-w-md bg-zinc-800/80 backdrop-blur-sm rounded-lg border border-zinc-700/50 shadow-2xl overflow-hidden">
+            <!-- Editor Title Bar -->
+            <div class="flex items-center gap-2 px-4 py-2.5 bg-zinc-800 border-b border-zinc-700/50">
+              <div class="flex gap-1.5">
+                <div class="w-3 h-3 rounded-full bg-red-500/80"></div>
+                
+                <div class="w-3 h-3 rounded-full bg-yellow-500/80"></div>
+                
+                <div class="w-3 h-3 rounded-full bg-green-500/80"></div>
+              </div>
+               <span class="text-zinc-500 text-xs font-mono ml-2">iex — ExDesk.Session</span>
+            </div>
+            <!-- Editor Content -->
+            <div class="p-4 font-mono text-sm">
+              <div class="flex items-center gap-2 text-zinc-500 text-xs mb-3">
+                <.icon name="hero-chevron-right" class="size-3" /> <span>iex(1)></span>
+              </div>
+              
+              <div class="text-zinc-300 flex items-center gap-1 flex-wrap">
+                <span
+                  class={[
+                    "animate-pipeline-appear",
+                    if(@has_error, do: "text-orange-400", else: "text-red-400")
+                  ]}
+                  style="animation-delay: 100ms"
+                >
+                  {pipeline_input(@has_error)}
+                </span>
+                <span class="text-zinc-600 animate-pipeline-appear" style="animation-delay: 300ms">
+                  |>
+                </span>
+                <span
+                  class="text-purple-400 font-bold animate-pipeline-appear"
+                  style="animation-delay: 500ms"
+                >
+                  {pipeline_function(@has_error)}
+                </span>
+                <span class="text-zinc-600 animate-pipeline-appear" style="animation-delay: 700ms">
+                  |>
+                </span>
+                <span
+                  class={[
+                    "animate-pipeline-appear",
+                    if(@has_error, do: "text-red-500 font-bold", else: "text-green-400")
+                  ]}
+                  style="animation-delay: 900ms"
+                >
+                  {pipeline_result(@has_error)}
+                </span>
+              </div>
+            </div>
           </div>
         </div>
         <!-- Decoration -->
@@ -67,6 +113,14 @@ defmodule ExDeskWeb.UserLive.Login do
                 Don't have an account? Contact your administrator.
               <% end %>
             </div>
+            
+            <p
+              :if={@has_error}
+              class="mt-4 text-sm text-error font-medium flex items-center justify-center gap-2"
+            >
+              <.icon name="hero-exclamation-circle" class="size-4" />
+              Invalid credentials. Please check your email and password.
+            </p>
           </div>
           
           <div :if={local_mail_adapter?()} class="alert alert-info mb-8 shadow-sm">
@@ -97,7 +151,8 @@ defmodule ExDeskWeb.UserLive.Login do
                 label="Email address"
                 autocomplete="email"
                 required
-                phx-mounted={JS.focus()}
+                phx-mounted={if(!@has_error, do: JS.focus(), else: nil)}
+                error_class={if(@has_error, do: "input-error ring-2 ring-error/30", else: nil)}
                 class="input input-bordered input-lg w-full focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/50 rounded-xl bg-gray-50 dark:bg-zinc-900/50"
               />
               <.input
@@ -105,6 +160,8 @@ defmodule ExDeskWeb.UserLive.Login do
                 type="password"
                 label="Password"
                 autocomplete="current-password"
+                phx-mounted={if(@has_error, do: JS.focus(), else: nil)}
+                error_class={if(@has_error, do: "input-error ring-2 ring-error/30", else: nil)}
                 class="input input-bordered input-lg w-full focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/50 rounded-xl bg-gray-50 dark:bg-zinc-900/50"
               />
               <div class="flex items-center justify-between">
@@ -135,13 +192,13 @@ defmodule ExDeskWeb.UserLive.Login do
                 >
                   Sign in <span aria-hidden="true">→</span>
                 </button>
-                <div class="relative py-2">
+                <div class="relative py-3">
                   <div class="absolute inset-0 flex items-center">
-                    <div class="w-full border-t border-base-300"></div>
+                    <div class="w-full border-t-2 border-base-300/50"></div>
                   </div>
                   
-                  <div class="relative flex justify-center text-sm">
-                    <span class="px-2 bg-white dark:bg-base-100 text-base-content/50 text-xs">
+                  <div class="relative flex justify-center">
+                    <span class="px-4 bg-white dark:bg-base-100 text-base-content/70 text-sm font-medium uppercase tracking-wider">
                       or
                     </span>
                   </div>
@@ -184,9 +241,10 @@ defmodule ExDeskWeb.UserLive.Login do
       Phoenix.Flash.get(socket.assigns.flash, :email) ||
         get_in(socket.assigns, [:current_scope, Access.key(:user), Access.key(:email)])
 
+    has_error = Phoenix.Flash.get(socket.assigns.flash, :error) != nil
     form = to_form(%{"email" => email}, as: "user")
 
-    {:ok, assign(socket, form: form, trigger_submit: false)}
+    {:ok, assign(socket, form: form, trigger_submit: false, has_error: has_error)}
   end
 
   @doc """
@@ -225,4 +283,13 @@ defmodule ExDeskWeb.UserLive.Login do
   defp local_mail_adapter? do
     Application.get_env(:ex_desk, ExDesk.Mailer)[:adapter] == Swoosh.Adapters.Local
   end
+
+  defp pipeline_input(true), do: "Credentials"
+  defp pipeline_input(false), do: "IT_Issues"
+
+  defp pipeline_function(true), do: "ExDesk.authenticate()"
+  defp pipeline_function(false), do: "ExDesk.solve()"
+
+  defp pipeline_result(true), do: "{:error, :unauthorized}"
+  defp pipeline_result(false), do: ":ok"
 end

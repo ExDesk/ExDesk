@@ -13,13 +13,14 @@ defmodule ExDeskWeb.UserSessionController do
   end
 
   # magic link login
-  defp create(conn, %{"user" => %{"token" => token} = user_params}, info) do
+  defp create(conn, %{"user" => %{"token" => token} = user_params}, _info) do
     case Accounts.login_user_by_magic_link(token) do
       {:ok, {user, tokens_to_disconnect}} ->
         UserAuth.disconnect_sessions(tokens_to_disconnect)
+        welcome_message = welcome_message(user)
 
         conn
-        |> put_flash(:info, info)
+        |> put_flash(:info, welcome_message)
         |> UserAuth.log_in_user(user, user_params)
 
       _ ->
@@ -30,12 +31,14 @@ defmodule ExDeskWeb.UserSessionController do
   end
 
   # email + password login
-  defp create(conn, %{"user" => user_params}, info) do
+  defp create(conn, %{"user" => user_params}, _info) do
     %{"email" => email, "password" => password} = user_params
 
     if user = Accounts.authenticate_user(email, password) do
+      welcome_message = welcome_message(user)
+
       conn
-      |> put_flash(:info, info)
+      |> put_flash(:info, welcome_message)
       |> UserAuth.log_in_user(user, user_params)
     else
       # In order to prevent user enumeration attacks, don't disclose whether the email is registered.
@@ -63,5 +66,10 @@ defmodule ExDeskWeb.UserSessionController do
     conn
     |> put_flash(:info, "Logged out successfully.")
     |> UserAuth.log_out_user()
+  end
+
+  defp welcome_message(user) do
+    name = user.name || String.split(user.email, "@") |> List.first()
+    "Welcome back, #{name}!"
   end
 end
