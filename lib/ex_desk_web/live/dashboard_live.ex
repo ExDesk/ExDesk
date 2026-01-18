@@ -1,6 +1,8 @@
 defmodule ExDeskWeb.DashboardLive do
   use ExDeskWeb, :live_view
 
+  alias ExDesk.Support
+
   @impl true
   def render(assigns) do
     ~H"""
@@ -21,7 +23,9 @@ defmodule ExDeskWeb.DashboardLive do
                   <div>
                     <p class="text-sm font-medium text-base-content/60">Total Tickets</p>
                     
-                    <p class="text-3xl font-mono font-bold tracking-tight mt-1 text-primary">24</p>
+                    <p class="text-3xl font-mono font-bold tracking-tight mt-1 text-primary">
+                      {@total_tickets}
+                    </p>
                   </div>
                   
                   <div class="p-3 bg-primary/10 rounded-full">
@@ -42,7 +46,9 @@ defmodule ExDeskWeb.DashboardLive do
                   <div>
                     <p class="text-sm font-medium text-base-content/60">Open Tickets</p>
                     
-                    <p class="text-3xl font-mono font-bold tracking-tight mt-1 text-warning">8</p>
+                    <p class="text-3xl font-mono font-bold tracking-tight mt-1 text-warning">
+                      {@open_tickets}
+                    </p>
                   </div>
                   
                   <div class="p-3 bg-warning/10 rounded-full">
@@ -62,7 +68,9 @@ defmodule ExDeskWeb.DashboardLive do
                   <div>
                     <p class="text-sm font-medium text-base-content/60">Assigned to Me</p>
                     
-                    <p class="text-3xl font-mono font-bold tracking-tight mt-1 text-secondary">5</p>
+                    <p class="text-3xl font-mono font-bold tracking-tight mt-1 text-secondary">
+                      {@assigned_tickets}
+                    </p>
                   </div>
                   
                   <div class="p-3 bg-secondary/10 rounded-full">
@@ -82,7 +90,9 @@ defmodule ExDeskWeb.DashboardLive do
                   <div>
                     <p class="text-sm font-medium text-base-content/60">Avg Response Time</p>
                     
-                    <p class="text-3xl font-mono font-bold tracking-tight mt-1 text-accent">2.4h</p>
+                    <p class="text-3xl font-mono font-bold tracking-tight mt-1 text-accent">
+                      {@avg_response_time}h
+                    </p>
                   </div>
                   
                   <div class="p-3 bg-accent/10 rounded-full">
@@ -139,6 +149,15 @@ defmodule ExDeskWeb.DashboardLive do
 
   @impl true
   def mount(_params, _session, socket) do
+    user = socket.assigns.current_scope.user
+
+    socket =
+      socket
+      |> assign(:total_tickets, Support.count_total_tickets())
+      |> assign(:open_tickets, Support.count_open_tickets())
+      |> assign(:assigned_tickets, Support.count_assigned_tickets(user.id))
+      |> assign(:avg_response_time, Support.calculate_avg_response_time())
+
     {:ok, socket}
   end
 end
