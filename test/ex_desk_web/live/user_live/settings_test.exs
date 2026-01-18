@@ -116,7 +116,7 @@ defmodule ExDeskWeb.UserLive.SettingsTest do
       assert get_session(new_password_conn, :user_token) != get_session(conn, :user_token)
 
       assert Phoenix.Flash.get(new_password_conn.assigns.flash, :info) =~
-               "Password updated successfully"
+               "Welcome back"
 
       assert Accounts.authenticate_user(user.email, new_password)
     end

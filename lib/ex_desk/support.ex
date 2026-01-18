@@ -336,4 +336,44 @@ defmodule ExDesk.Support do
     |> Repo.all()
     |> Repo.preload(:actor)
   end
+
+  @doc """
+  Returns the total count of tickets in the system.
+  """
+  def count_total_tickets do
+    Repo.aggregate(Ticket, :count, :id)
+  end
+
+  @doc """
+  Returns the count of tickets with a specific status.
+  """
+  def count_tickets_by_status(status) do
+    Ticket
+    |> where([t], t.status == ^status)
+    |> Repo.aggregate(:count, :id)
+  end
+
+  @doc """
+  Returns the count of open tickets.
+  """
+  def count_open_tickets do
+    count_tickets_by_status(:open)
+  end
+
+  @doc """
+  Returns the count of tickets assigned to a specific user.
+  """
+  def count_assigned_tickets(user_id) do
+    Ticket
+    |> where([t], t.assignee_id == ^user_id)
+    |> Repo.aggregate(:count, :id)
+  end
+
+  @doc """
+  Calculates the average response time for solved tickets in hours.
+  Currently returns 0.0 (placeholder).
+  """
+  def calculate_avg_response_time do
+    0.0
+  end
 end
