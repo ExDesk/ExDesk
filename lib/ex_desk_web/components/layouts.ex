@@ -35,7 +35,7 @@ defmodule ExDeskWeb.Layouts do
 
   def sidebar(assigns) do
     ~H"""
-    <aside class="w-64 bg-base-100 border-r border-base-300 flex flex-col shadow-lg">
+    <aside class="w-64 bg-base-200/50 border-r border-base-300 flex flex-col shadow-sm">
       <!-- Logo / Brand -->
       <div class="p-8 border-b border-base-300 flex flex-col items-center">
         <.link navigate={~p"/dashboard"} class="flex flex-col items-center gap-2 text-center group">
