@@ -114,13 +114,34 @@ defmodule ExDeskWeb.DashboardLive do
                 <h2 class="card-title text-base-content">Recent Activity</h2>
                 
                 <ul class="steps steps-vertical mt-4">
-                  <li class="step step-primary">Ticket #123 created</li>
+                  <li :for={activity <- @recent_activities} class="step step-primary">
+                    <div class="text-left">
+                      <span class="font-medium text-base-content">
+                        <%= case activity.action do %>
+                          <% :created -> %>
+                            Ticket created
+                          <% :assigned -> %>
+                            Assigned to {if activity.actor, do: activity.actor.email, else: "System"}
+                          <% :status_changed -> %>
+                            Status changed for ticket
+                          <% :commented -> %>
+                            Comment added
+                          <% other -> %>
+                            {Phoenix.Naming.humanize(other)}
+                        <% end %>
+                      </span>
+                      <span class="text-xs text-base-content/60 block">
+                        {Calendar.strftime(activity.inserted_at, "%H:%M")} - Ticket #{activity.ticket_id}
+                      </span>
+                    </div>
+                  </li>
                   
-                  <li class="step step-primary">Asset assigned to John Doe</li>
-                  
-                  <li class="step">Server maintenance scheduled</li>
-                  
-                  <li class="step">New license purchased</li>
+                  <li
+                    :if={length(@recent_activities) == 0}
+                    class="text-base-content/50 italic text-sm py-4"
+                  >
+                    No recent activity found.
+                  </li>
                 </ul>
               </div>
             </div>
@@ -157,6 +178,7 @@ defmodule ExDeskWeb.DashboardLive do
       |> assign(:open_tickets, Support.count_open_tickets())
       |> assign(:assigned_tickets, Support.count_assigned_tickets(user.id))
       |> assign(:avg_response_time, Support.calculate_avg_response_time())
+      |> assign(:recent_activities, Support.list_recent_activities(limit: 5))
 
     {:ok, socket}
   end
