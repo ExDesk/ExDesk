@@ -23,9 +23,37 @@ defmodule ExDeskWeb.Layouts do
 
   def app(assigns) do
     ~H"""
-    <div class="flex min-h-screen bg-base-200">
-      <.sidebar current_scope={@current_scope} />
-      <main class="flex-1 overflow-auto">{render_slot(@inner_block)}</main>
+    <div class="drawer lg:drawer-open font-sans antialiased">
+      <input id="app-drawer" type="checkbox" class="drawer-toggle" />
+      <div class="drawer-content flex flex-col min-h-screen bg-base-100">
+        <!-- Mobile Header -->
+        <header class="lg:hidden flex items-center justify-between border-b border-base-200 bg-base-100 px-4 py-3 sticky top-0 z-30">
+          <div class="flex items-center gap-3">
+            <label for="app-drawer" class="btn btn-square btn-ghost btn-sm drawer-button">
+              <.icon name="hero-bars-3" class="size-6" />
+            </label> <span class="font-bold text-lg tracking-tight">ExDesk</span>
+          </div>
+          
+          <div :if={@current_scope} class="flex items-center gap-2">
+            <.link navigate={~p"/users/profile"} class="avatar placeholder">
+              <div class="bg-neutral text-neutral-content rounded-full w-8">
+                <span class="text-xs">
+                  {String.first(@current_scope.user.email) |> String.upcase()}
+                </span>
+              </div>
+            </.link>
+          </div>
+        </header>
+        
+        <main class="flex-1 overflow-y-auto bg-base-100 p-4 lg:p-8">
+          <div class="mx-auto max-w-7xl animate-pipeline-appear">{render_slot(@inner_block)}</div>
+        </main>
+      </div>
+      
+      <div class="drawer-side z-40">
+        <label for="app-drawer" aria-label="close sidebar" class="drawer-overlay"></label>
+        <.sidebar current_scope={@current_scope} />
+      </div>
     </div>
      <.flash_group flash={@flash} />
     """
@@ -38,59 +66,67 @@ defmodule ExDeskWeb.Layouts do
 
   def sidebar(assigns) do
     ~H"""
-    <aside class="w-64 bg-base-200/50 border-r border-base-300 flex flex-col shadow-sm">
-      <!-- Logo / Brand -->
-      <div class="p-8 border-b border-base-300 flex flex-col items-center">
-        <.link navigate={~p"/dashboard"} class="flex flex-col items-center gap-2 text-center group">
-          <span class="text-4xl font-black tracking-tighter hover:scale-105 transition-transform duration-300">
-            <span class="text-transparent bg-clip-text bg-gradient-to-r from-purple-500 to-indigo-600">Ex</span>Desk
-          </span>
+    <aside class="flex flex-col w-72 min-h-full bg-base-100 border-r border-base-200 text-base-content">
+      <!-- Sidebar Header -->
+      <div class="h-16 flex items-center gap-3 px-6 border-b border-base-200">
+        <.link navigate={~p"/dashboard"} class="flex items-center gap-2 group">
+          <div class="bg-primary/10 text-primary p-1.5 rounded-lg group-hover:bg-primary/20 transition-colors">
+            <.icon name="hero-command-line" class="size-6" />
+          </div>
+           <span class="font-bold text-xl tracking-tight">ExDesk</span>
         </.link>
       </div>
       <!-- Navigation -->
-      <nav class="flex-1 p-4 space-y-2">
-        <.sidebar_link icon="hero-home" label="Dashboard" href={~p"/dashboard"} />
+      <nav class="flex-1 overflow-y-auto p-4 space-y-1">
+        <div class="text-xs font-semibold text-base-content/50 uppercase tracking-wider mb-2 px-2">
+          Overview
+        </div>
+         <.sidebar_link icon="hero-home" label="Dashboard" href={~p"/dashboard"} />
         <.sidebar_link
           icon="hero-ticket"
           label="Tickets"
           href={~p"/dashboard"}
           badge={to_string(Support.count_total_tickets())}
-        /> <.sidebar_link icon="hero-computer-desktop" label="Assets" href={~p"/dashboard"} />
+        />
+        <div class="text-xs font-semibold text-base-content/50 uppercase tracking-wider mt-6 mb-2 px-2">
+          Manage
+        </div>
+         <.sidebar_link icon="hero-computer-desktop" label="Assets" href={~p"/dashboard"} />
         <.sidebar_link
           icon="hero-users"
           label="Users"
           href={~p"/dashboard"}
           badge={to_string(Accounts.count_users())}
-        /> <.sidebar_link icon="hero-chart-bar" label="Reports" href={~p"/dashboard"} />
-        <div class="divider my-4 text-xs text-base-content/50">Administration</div>
-         <.sidebar_link icon="hero-user-circle" label="Account" href={~p"/users/profile"} />
+        />
+        <div class="text-xs font-semibold text-base-content/50 uppercase tracking-wider mt-6 mb-2 px-2">
+          System
+        </div>
+         <.sidebar_link icon="hero-chart-bar" label="Reports" href={~p"/dashboard"} />
+        <.sidebar_link icon="hero-cog-6-tooth" label="Settings" href={~p"/users/profile"} />
       </nav>
-      <!-- User Section -->
-      <div :if={@current_scope} class="p-4 border-t border-base-300">
-        <.link
-          navigate={~p"/users/profile"}
-          class="flex items-center gap-3 p-3 rounded-xl bg-base-200/50 hover:bg-base-200 transition-colors group"
-        >
-          <div class="avatar placeholder group-hover:scale-105 transition-transform">
-            <div class="bg-gradient-to-br from-purple-500 to-indigo-600 text-white rounded-full w-10">
-              <span class="text-sm font-bold">
+      <!-- User Footer -->
+      <div :if={@current_scope} class="p-4 border-t border-base-200">
+        <div class="flex items-center gap-3 p-3 rounded-xl bg-base-200/50 hover:bg-base-200 transition-colors">
+          <div class="avatar placeholder">
+            <div class="bg-neutral text-neutral-content rounded-full w-9">
+              <span class="text-sm font-semibold">
                 {String.first(@current_scope.user.email) |> String.upcase()}
               </span>
             </div>
           </div>
           
           <div class="flex-1 min-w-0">
-            <p class="text-sm font-medium text-base-content truncate">{@current_scope.user.email}</p>
+            <p class="text-sm font-medium truncate">{@current_scope.user.email}</p>
             
             <.link
               href={~p"/users/log-out"}
               method="delete"
-              class="text-xs text-base-content/60 hover:text-error transition-colors"
+              class="text-xs text-error hover:underline"
             >
               Sign out
             </.link>
           </div>
-        </.link>
+        </div>
       </div>
     </aside>
     """
