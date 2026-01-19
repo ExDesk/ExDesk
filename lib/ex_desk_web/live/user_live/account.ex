@@ -77,13 +77,13 @@ defmodule ExDeskWeb.UserLive.Account do
                           />
                         </div>
                         
-                        <button
+                        <.button
                           type="button"
                           phx-click="preview_avatar"
                           class="btn btn-secondary mb-2"
                         >
                           Preview
-                        </button>
+                        </.button>
                       </div>
                       
                       <%= if @avatar_preview_url do %>
@@ -121,11 +121,9 @@ defmodule ExDeskWeb.UserLive.Account do
                             Live Preview
                           </div>
                           
-                          <div class="prose prose-sm prose-slate max-w-none text-base-content/70">
-                            {(@profile_form[:notes].value || "Nothing to preview yet...")
-                            |> MDEx.to_html!(extension: [header_ids: ""])
-                            |> raw()}
-                          </div>
+                          <.markdown content={
+                            @profile_form[:notes].value || "Nothing to preview yet..."
+                          } />
                         </div>
                       </div>
                     </div>
@@ -133,7 +131,7 @@ defmodule ExDeskWeb.UserLive.Account do
                     <div class="card-actions justify-start pt-4 border-t border-base-200">
                       <.button
                         variant="primary"
-                        class="w-full sm:w-auto"
+                        class="btn btn-primary w-full sm:w-auto"
                         disabled={@profile_form.source.changes == %{} || !@profile_form.source.valid?}
                       >
                         <span class="phx-submit-loading:hidden">Save Profile</span>
