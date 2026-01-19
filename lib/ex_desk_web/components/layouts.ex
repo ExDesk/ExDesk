@@ -5,6 +5,9 @@ defmodule ExDeskWeb.Layouts do
   """
   use ExDeskWeb, :html
 
+  alias ExDesk.Accounts
+  alias ExDesk.Support
+
   embed_templates "layouts/*"
 
   @doc """
@@ -47,10 +50,18 @@ defmodule ExDeskWeb.Layouts do
       <!-- Navigation -->
       <nav class="flex-1 p-4 space-y-2">
         <.sidebar_link icon="hero-home" label="Dashboard" href={~p"/dashboard"} />
-        <.sidebar_link icon="hero-ticket" label="Tickets" href={~p"/dashboard"} badge="8" />
-        <.sidebar_link icon="hero-computer-desktop" label="Assets" href={~p"/dashboard"} />
-        <.sidebar_link icon="hero-users" label="Users" href={~p"/dashboard"} />
-        <.sidebar_link icon="hero-chart-bar" label="Reports" href={~p"/dashboard"} />
+        <.sidebar_link
+          icon="hero-ticket"
+          label="Tickets"
+          href={~p"/dashboard"}
+          badge={to_string(Support.count_total_tickets())}
+        /> <.sidebar_link icon="hero-computer-desktop" label="Assets" href={~p"/dashboard"} />
+        <.sidebar_link
+          icon="hero-users"
+          label="Users"
+          href={~p"/dashboard"}
+          badge={to_string(Accounts.count_users())}
+        /> <.sidebar_link icon="hero-chart-bar" label="Reports" href={~p"/dashboard"} />
         <div class="divider my-4 text-xs text-base-content/50">Administration</div>
          <.sidebar_link icon="hero-user-circle" label="Account" href={~p"/users/profile"} />
       </nav>
