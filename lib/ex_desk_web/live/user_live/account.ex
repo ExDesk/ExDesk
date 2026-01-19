@@ -21,6 +21,13 @@ defmodule ExDeskWeb.UserLive.Account do
             <div class="card bg-base-100 shadow-xl border border-base-200">
               <div class="card-body p-6">
                 <%= if @live_action == :profile do %>
+                  <%= if map_size(@profile_form.source.changes) > 0 do %>
+                    <div class="alert alert-warning mb-6">
+                      <.icon name="hero-exclamation-triangle" class="size-5" />
+                      <span>You have unsaved changes</span>
+                    </div>
+                  <% end %>
+                  
                   <.form
                     for={@profile_form}
                     id="profile_form"
@@ -60,12 +67,38 @@ defmodule ExDeskWeb.UserLive.Account do
                         label="Employee Number"
                         left_icon="hero-identification"
                       />
-                      <.input
-                        field={@profile_form[:avatar_url]}
-                        type="text"
-                        label="Avatar URL"
-                        left_icon="hero-photo"
-                      />
+                      <div class="flex items-end gap-2">
+                        <div class="flex-1">
+                          <.input
+                            field={@profile_form[:avatar_url]}
+                            type="text"
+                            label="Avatar URL"
+                            left_icon="hero-photo"
+                          />
+                        </div>
+                        
+                        <button
+                          type="button"
+                          phx-click="preview_avatar"
+                          class="btn btn-secondary mb-2"
+                        >
+                          Preview
+                        </button>
+                      </div>
+                      
+                      <%= if @avatar_preview_url do %>
+                        <div class="mt-2 p-2 border rounded-lg bg-base-50">
+                          <div class="text-xs font-bold text-base-content/50 uppercase mb-1">
+                            Preview
+                          </div>
+                          
+                          <img
+                            src={@avatar_preview_url}
+                            class="h-20 w-20 rounded-full object-cover border bg-base-200"
+                            alt="Avatar Preview"
+                          />
+                        </div>
+                      <% end %>
                     </div>
                     
                     <div class="space-y-2">
@@ -90,7 +123,7 @@ defmodule ExDeskWeb.UserLive.Account do
                           
                           <div class="prose prose-sm prose-slate max-w-none text-base-content/70">
                             {(@profile_form[:notes].value || "Nothing to preview yet...")
-                            |> String.replace("\n", "<br/>")
+                            |> MDEx.to_html!(extension: [header_ids: ""])
                             |> raw()}
                           </div>
                         </div>
@@ -98,7 +131,16 @@ defmodule ExDeskWeb.UserLive.Account do
                     </div>
                     
                     <div class="card-actions justify-start pt-4 border-t border-base-200">
-                      <.button variant="primary" phx-disable-with="Saving...">Save Profile</.button>
+                      <.button
+                        variant="primary"
+                        class="w-full sm:w-auto"
+                        disabled={@profile_form.source.changes == %{} || !@profile_form.source.valid?}
+                      >
+                        <span class="phx-submit-loading:hidden">Save Profile</span>
+                        <span class="hidden phx-submit-loading:inline-flex items-center justify-center">
+                          <span class="loading loading-spinner loading-xs mr-2"></span> Saving...
+                        </span>
+                      </.button>
                     </div>
                   </.form>
                 <% end %>
@@ -175,6 +217,7 @@ defmodule ExDeskWeb.UserLive.Account do
     {:ok,
      socket
      |> assign(:user_params, %{})
+     |> assign(:avatar_preview_url, nil)
      |> assign_profile_form(user)
      |> assign_preferences_form(user)}
   end
@@ -205,11 +248,18 @@ defmodule ExDeskWeb.UserLive.Account do
          socket
          |> put_flash(:info, "Profile updated successfully.")
          |> assign(user_params: %{})
+         |> assign(avatar_preview_url: nil)
          |> assign_profile_form(user)}
 
       {:error, changeset} ->
         {:noreply, assign(socket, profile_form: to_form(changeset))}
     end
+  end
+
+  def handle_event("preview_avatar", _params, socket) do
+    # Try to get URL from validated params, or fallback to current user avatar if no params yet (optional, but checking params first)
+    url = socket.assigns.user_params["avatar_url"] || socket.assigns.current_scope.user.avatar_url
+    {:noreply, assign(socket, avatar_preview_url: url)}
   end
 
   @impl true
