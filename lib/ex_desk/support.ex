@@ -376,4 +376,20 @@ defmodule ExDesk.Support do
   def calculate_avg_response_time do
     0.0
   end
+
+  @doc """
+  Returns the most recent activities across all tickets.
+
+  ## Options
+    * `:limit` - Maximum number of activities to return (default: 10)
+  """
+  def list_recent_activities(opts \\ []) do
+    limit = Keyword.get(opts, :limit, 10)
+
+    TicketActivity
+    |> order_by([a], desc: a.inserted_at, desc: a.id)
+    |> limit(^limit)
+    |> Repo.all()
+    |> Repo.preload([:actor, :ticket])
+  end
 end
