@@ -88,6 +88,7 @@ defmodule ExDeskWeb do
       import Phoenix.HTML
       # Core UI components
       import ExDeskWeb.CoreComponents
+      import ExDeskWeb.Markdown
 
       # Common modules used in templates
       alias Phoenix.LiveView.JS
