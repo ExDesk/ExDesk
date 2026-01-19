@@ -326,4 +326,13 @@ defmodule ExDesk.Accounts do
       end
     end)
   end
+
+  ## Statistics
+
+  @doc """
+  Returns the total count of users in the system.
+  """
+  def count_users do
+    Repo.aggregate(User, :count, :id)
+  end
 end

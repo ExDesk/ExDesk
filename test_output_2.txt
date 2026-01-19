@@ -1,0 +1,27 @@
+Running ExUnit with seed: 399640, max_cases: 24
+
+
+
+  1) test dashboard activities list_recent_activities/1 returns recent global activities (ExDesk.SupportActivityTest)
+     test/ex_desk/support_activity_test.exs:8
+     ** (ArgumentError) :utc_datetime expects microseconds to be empty, got: ~U[2026-01-18 23:27:16.685000Z]
+
+     Use `DateTime.truncate(utc_datetime, :second)` (available in Elixir v1.6+) to remove microseconds.
+
+     code: {:ok, _t1_updated} = Support.resolve_issue(t1, user.id)
+     stacktrace:
+       (ecto 3.13.5) lib/ecto/type.ex:1573: Ecto.Type.check_no_usec!/2
+       (ecto 3.13.5) lib/ecto/type.ex:614: Ecto.Type.dump_utc_datetime/1
+       (ecto 3.13.5) lib/ecto/type.ex:1049: Ecto.Type.process_dumpers/3
+       (ecto 3.13.5) lib/ecto/repo/schema.ex:1296: Ecto.Repo.Schema.dump_field!/6
+       (ecto 3.13.5) lib/ecto/repo/schema.ex:1310: anonymous fn/6 in Ecto.Repo.Schema.dump_fields!/5
+       (stdlib 6.2.2.2) maps.erl:860: :maps.fold_1/4
+       (ecto 3.13.5) lib/ecto/repo/schema.ex:1308: Ecto.Repo.Schema.dump_fields!/5
+       (ecto 3.13.5) lib/ecto/repo/schema.ex:1240: Ecto.Repo.Schema.dump_changes!/7
+       (ecto 3.13.5) lib/ecto/repo/schema.ex:577: anonymous fn/15 in Ecto.Repo.Schema.do_update/4
+       (ex_desk 0.1.0) lib/ex_desk/support.ex:251: ExDesk.Support.do_transition/5
+       test/ex_desk/support_activity_test.exs:25: (test)
+
+
+Finished in 0.2 seconds (0.00s async, 0.2s sync)
+1 test, 1 failure
