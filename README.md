@@ -128,7 +128,7 @@ The provided Docker configuration manages the required infrastructure services (
 
 - [ ] Core Ticket Management System
 - [ ] Asset CRUD & Database Schema
-- [ ] User Authentication & Roles (Admin, Agent, User)
+- [x] User Authentication & Roles (Admin, Agent, User)
 - [ ] Linking Assets to Tickets
 - [ ] Email Integration (Incoming/Outgoing)
 - [ ] API for external integrations
