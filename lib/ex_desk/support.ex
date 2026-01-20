@@ -181,7 +181,8 @@ defmodule ExDesk.Support do
 
   def hold_ticket(%Ticket{status: status} = ticket, actor_id, reason)
       when status not in [:closed] do
-    do_transition(ticket, :on_hold, actor_id, :held, %{hold_reason: reason})
+    extra = %{custom_fields: Map.put(ticket.custom_fields || %{}, "hold_reason", reason)}
+    do_transition(ticket, :on_hold, actor_id, :held, extra)
   end
 
   def hold_ticket(%Ticket{status: :closed}, _actor_id, _reason) do
@@ -205,7 +206,7 @@ defmodule ExDesk.Support do
   """
   def resolve_issue(%Ticket{status: status} = ticket, actor_id)
       when status not in [:closed, :solved] do
-    extra = %{solved_at: DateTime.utc_now()}
+    extra = %{solved_at: DateTime.utc_now() |> DateTime.truncate(:second)}
     do_transition(ticket, :solved, actor_id, :resolved, extra)
   end
 
@@ -222,7 +223,7 @@ defmodule ExDesk.Support do
   Only administrators should call this function (check via Policy).
   """
   def close_ticket(%Ticket{status: :solved} = ticket, actor_id) do
-    extra = %{closed_at: DateTime.utc_now()}
+    extra = %{closed_at: DateTime.utc_now() |> DateTime.truncate(:second)}
     do_transition(ticket, :closed, actor_id, :closed, extra)
   end
 

@@ -11,7 +11,8 @@ defmodule ExDesk.MixProject do
       aliases: aliases(),
       deps: deps(),
       compilers: [:phoenix_live_view] ++ Mix.compilers(),
-      listeners: [Phoenix.CodeReloader]
+      listeners: [Phoenix.CodeReloader],
+      test_coverage: [tool: ExCoveralls]
     ]
   end
 
@@ -27,7 +28,13 @@ defmodule ExDesk.MixProject do
 
   def cli do
     [
-      preferred_envs: [precommit: :test]
+      preferred_envs: [
+        precommit: :test,
+        coveralls: :test,
+        "coveralls.detail": :test,
+        "coveralls.post": :test,
+        "coveralls.html": :test
+      ]
     ]
   end
 
@@ -72,7 +79,8 @@ defmodule ExDesk.MixProject do
       {:machinery, "~> 1.1.0"},
       {:mix_unused, "~> 0.4", only: :dev, runtime: false},
       {:dialyxir, "~> 1.4", only: [:dev, :test], runtime: false},
-     {:mdex, "~> 0.11"}
+      {:mdex, "~> 0.11"},
+      {:excoveralls, "~> 0.18", only: :test}
     ]
   end
 

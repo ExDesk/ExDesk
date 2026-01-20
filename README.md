@@ -126,7 +126,7 @@ The provided Docker configuration manages the required infrastructure services (
 
 ## Development Roadmap
 
-- [ ] Core Ticket Management System
+- [x] Core Ticket Management System
 - [ ] Asset CRUD & Database Schema
 - [x] User Authentication & Roles (Admin, Agent, User)
 - [ ] Linking Assets to Tickets

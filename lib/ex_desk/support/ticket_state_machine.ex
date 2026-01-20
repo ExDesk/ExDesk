@@ -89,11 +89,19 @@ defmodule ExDesk.Support.TicketStateMachine do
   end
 
   defp add_timestamp_fields(changeset, "solved") do
-    Ecto.Changeset.put_change(changeset, :solved_at, DateTime.utc_now())
+    Ecto.Changeset.put_change(
+      changeset,
+      :solved_at,
+      DateTime.utc_now() |> DateTime.truncate(:second)
+    )
   end
 
   defp add_timestamp_fields(changeset, "closed") do
-    Ecto.Changeset.put_change(changeset, :closed_at, DateTime.utc_now())
+    Ecto.Changeset.put_change(
+      changeset,
+      :closed_at,
+      DateTime.utc_now() |> DateTime.truncate(:second)
+    )
   end
 
   defp add_timestamp_fields(changeset, _status), do: changeset
