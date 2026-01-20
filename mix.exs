@@ -11,7 +11,15 @@ defmodule ExDesk.MixProject do
       aliases: aliases(),
       deps: deps(),
       compilers: [:phoenix_live_view] ++ Mix.compilers(),
-      listeners: [Phoenix.CodeReloader]
+      listeners: [Phoenix.CodeReloader],
+      test_coverage: [tool: ExCoveralls],
+      preferred_cli_env: [
+        coveralls: :test,
+        "coveralls.detail": :test,
+        "coveralls.post": :test,
+        "coveralls.html": :test,
+        "coveralls.cobertura": :test
+      ]
     ]
   end
 
@@ -70,6 +78,7 @@ defmodule ExDesk.MixProject do
       {:credo, "~> 1.7", only: [:dev, :test], runtime: false},
       {:bodyguard, "~> 2.4"},
       {:machinery, "~> 1.1.0"},
+      {:excoveralls, "~> 0.18", only: :test},
       {:mix_unused, "~> 0.4", only: :dev, runtime: false},
       {:dialyxir, "~> 1.4", only: [:dev, :test], runtime: false},
      {:mdex, "~> 0.11"}
