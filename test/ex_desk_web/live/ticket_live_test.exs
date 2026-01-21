@@ -15,7 +15,7 @@ defmodule ExDeskWeb.TicketLiveTest do
       ticket = ticket_fixture(subject: "Help me")
       {:ok, _index_live, html} = live(conn, ~p"/tickets")
 
-      assert html =~ "Tickets"
+      assert html =~ "Spaces"
       assert html =~ "New Ticket"
       assert html =~ "Help me"
     end

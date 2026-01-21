@@ -6,7 +6,6 @@ defmodule ExDeskWeb.Layouts do
   use ExDeskWeb, :html
 
   alias ExDesk.Accounts
-  alias ExDesk.Support
 
   embed_templates "layouts/*"
 
@@ -63,6 +62,7 @@ defmodule ExDeskWeb.Layouts do
   Renders the application sidebar with navigation.
   """
   attr :current_scope, :map, default: nil
+  attr :spaces, :list, default: []
 
   def sidebar(assigns) do
     ~H"""
@@ -81,12 +81,16 @@ defmodule ExDeskWeb.Layouts do
           Overview
         </div>
          <.sidebar_link icon="hero-home" label="Dashboard" href={~p"/dashboard"} />
-        <.sidebar_link
-          icon="hero-ticket"
-          label="Tickets"
-          href={~p"/tickets"}
-          badge={to_string(Support.count_total_tickets())}
-        />
+        <div class="text-xs font-semibold text-base-content/50 uppercase tracking-wider mt-6 mb-2 px-2">
+          Spaces
+        </div>
+         <.space_link :for={space <- @spaces} space={space} />
+        <.link
+          navigate={~p"/spaces/new"}
+          class="flex items-center gap-3 px-4 py-2 rounded-xl text-base-content/50 hover:bg-base-200 hover:text-base-content transition-all group"
+        >
+          <.icon name="hero-plus" class="size-4" /> <span class="text-sm">Create Space</span>
+        </.link>
         <div class="text-xs font-semibold text-base-content/50 uppercase tracking-wider mt-6 mb-2 px-2">
           Manage
         </div>
@@ -149,6 +153,22 @@ defmodule ExDeskWeb.Layouts do
       <.icon name={@icon} class="size-5 group-hover:scale-110 transition-transform" />
       <span class="flex-1 font-medium">{@label}</span>
       <span :if={@badge} class="badge badge-primary badge-sm">{@badge}</span>
+    </.link>
+    """
+  end
+
+  attr :space, :map, required: true
+
+  defp space_link(assigns) do
+    ~H"""
+    <.link
+      navigate={~p"/spaces/#{@space.key}"}
+      class="flex items-center gap-3 px-4 py-2.5 rounded-xl text-base-content/70 hover:bg-base-200 hover:text-base-content transition-all group"
+    >
+      <div
+        class="size-5 rounded flex-shrink-0"
+        style={"background-color: #{@space.color}"}
+      /> <span class="flex-1 font-medium truncate">{@space.name}</span>
     </.link>
     """
   end
