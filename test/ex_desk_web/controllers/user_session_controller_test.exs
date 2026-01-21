@@ -58,7 +58,7 @@ defmodule ExDeskWeb.UserSessionControllerTest do
         })
 
       assert redirected_to(conn) == "/foo/bar"
-      assert Phoenix.Flash.get(conn.assigns.flash, :info) =~ "Welcome back"
+      assert Phoenix.Flash.get(conn.assigns.flash, :info) =~ "ExDesk.greet"
     end
 
     test "redirects to login page with invalid credentials", %{conn: conn, user: user} do
@@ -104,7 +104,7 @@ defmodule ExDeskWeb.UserSessionControllerTest do
 
       assert get_session(conn, :user_token)
       assert redirected_to(conn) == ~p"/dashboard"
-      assert Phoenix.Flash.get(conn.assigns.flash, :info) =~ "Welcome back"
+      assert Phoenix.Flash.get(conn.assigns.flash, :info) =~ "ExDesk.greet"
 
       assert Accounts.get_user!(user.id).confirmed_at
 

@@ -17,12 +17,12 @@ defmodule ExDeskWeb.UserLive.Settings do
             <:subtitle>Manage your session credentials and security settings.</:subtitle>
           </.header>
         </div>
-         <.account_nav current_page={:settings} />
+        <.account_nav current_page={:settings} />
         <!-- Email Section -->
         <div class="card bg-base-100 shadow-xl border border-base-200">
           <div class="card-body">
             <h3 class="card-title text-lg font-bold mb-4">Change Email</h3>
-            
+
             <.form
               for={@email_form}
               id="email_form"
@@ -50,7 +50,7 @@ defmodule ExDeskWeb.UserLive.Settings do
         <div class="card bg-base-100 shadow-xl border border-base-200">
           <div class="card-body">
             <h3 class="card-title text-lg font-bold mb-4">Update Password</h3>
-            
+
             <.form
               for={@password_form}
               id="password_form"
@@ -101,10 +101,14 @@ defmodule ExDeskWeb.UserLive.Settings do
     socket =
       case Accounts.confirm_email_change(socket.assigns.current_scope.user, token) do
         {:ok, _user} ->
-          put_flash(socket, :info, "Email changed successfully.")
+          put_flash(socket, :info, ":session |> Accounts.confirm_email() |> {:ok, :changed}")
 
         {:error, _} ->
-          put_flash(socket, :error, "Email change link is invalid or it has expired.")
+          put_flash(
+            socket,
+            :error,
+            ":session |> Accounts.confirm_email() |> {:error, :invalid_token}"
+          )
       end
 
     {:ok, push_navigate(socket, to: ~p"/users/settings")}
@@ -151,7 +155,7 @@ defmodule ExDeskWeb.UserLive.Settings do
           &url(~p"/users/settings/confirm_email/#{&1}")
         )
 
-        info = "A link to confirm your email change has been sent to the new address."
+        info = ":session |> Accounts.deliver_update_email() |> {:ok, :sent}"
         {:noreply, socket |> put_flash(:info, info)}
 
       changeset ->

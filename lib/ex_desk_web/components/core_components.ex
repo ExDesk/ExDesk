@@ -55,11 +55,6 @@ defmodule ExDeskWeb.CoreComponents do
       :if={msg = render_slot(@inner_block) || Phoenix.Flash.get(@flash, @kind)}
       id={@id}
       phx-click={JS.push("lv:clear-flash", value: %{key: @kind}) |> hide("##{@id}")}
-      phx-mounted={
-        JS.transition({"", "", ""}, time: :timer.seconds(15))
-        |> JS.push("lv:clear-flash", value: %{key: @kind})
-        |> hide("##{@id}")
-      }
       role="alert"
       class="toast toast-top toast-end z-50"
       {@rest}
@@ -128,14 +123,6 @@ defmodule ExDeskWeb.CoreComponents do
             >
               {pipeline_result(msg, @kind)}
             </span>
-          </div>
-        </div>
-        <%!-- Progress bar for auto-close --%>
-        <div class="h-0.5 bg-gray-200 dark:bg-zinc-700/50">
-          <div class={[
-            "h-full animate-shrink-width",
-            if(@kind == :error, do: "bg-red-500/60", else: "bg-green-500/60")
-          ]}>
           </div>
         </div>
       </div>

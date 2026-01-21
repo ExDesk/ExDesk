@@ -21,6 +21,7 @@ defmodule ExDeskWeb.SpaceLive.Form do
      |> assign(:action, action)
      |> assign(:space, space)
      |> assign(:template, template)
+     |> assign(:key_suggestions, [])
      |> assign(
        :template_info,
        Map.get(@template_info, template, %{name: "Custom", color: "#6B7280"})
@@ -48,7 +49,13 @@ defmodule ExDeskWeb.SpaceLive.Form do
       |> Support.change_space(space_params)
       |> Map.put(:action, :validate)
 
-    {:noreply, assign(socket, :form, to_form(changeset))}
+    # Gera sugestões de key baseadas no nome
+    suggestions = generate_key_suggestions(space_params["name"] || "")
+
+    {:noreply,
+     socket
+     |> assign(:form, to_form(changeset))
+     |> assign(:key_suggestions, suggestions)}
   end
 
   @impl true
@@ -103,15 +110,15 @@ defmodule ExDeskWeb.SpaceLive.Form do
             >
               <.icon name="hero-rectangle-stack" class="size-6 text-white" />
             </div>
-            
+
             <div>
               <h1 class="text-2xl font-bold">{@page_title}</h1>
-              
+
               <p class="text-base-content/60">{@template_info.name} template</p>
             </div>
           </div>
         </div>
-        
+
         <.form
           for={@form}
           id="space-form"
@@ -128,14 +135,35 @@ defmodule ExDeskWeb.SpaceLive.Form do
                 placeholder="e.g., IT Support, HR Requests"
                 required
               />
-              <.input
-                field={@form[:key]}
-                type="text"
-                label="Space key"
-                placeholder="e.g., IT, HR, FAC"
-                class="uppercase"
-                required
-              />
+              <div class="fieldset mb-2">
+                <label>
+                  <span class="label mb-1 font-semibold">Space key</span>
+                  <select
+                    id={@form[:key].id}
+                    name={@form[:key].name}
+                    class="select select-bordered w-full uppercase"
+                    required
+                  >
+                    <option value="" disabled selected={@form[:key].value in [nil, ""]}>
+                      Select a key or type your own
+                    </option>
+                    <option
+                      :for={suggestion <- @key_suggestions}
+                      value={suggestion}
+                      selected={@form[:key].value == suggestion}
+                    >
+                      {suggestion}
+                    </option>
+                  </select>
+                </label>
+                <p
+                  :if={@form[:key].errors != []}
+                  class="mt-1.5 flex gap-2 items-center text-sm text-error"
+                >
+                  <.icon name="hero-exclamation-circle" class="size-5" />
+                  {Enum.map(@form[:key].errors, fn {msg, _} -> msg end) |> Enum.join(", ")}
+                </p>
+              </div>
               <.input
                 field={@form[:color]}
                 type="color"
@@ -151,7 +179,7 @@ defmodule ExDeskWeb.SpaceLive.Form do
               />
             </div>
           </div>
-          
+
           <div class="flex justify-end gap-3">
             <.link navigate={back_path(@action, @space)} class="btn btn-ghost">Cancel</.link>
             <button type="submit" class="btn btn-primary">
@@ -166,4 +194,34 @@ defmodule ExDeskWeb.SpaceLive.Form do
 
   defp back_path(:new, _space), do: ~p"/spaces/new"
   defp back_path(:edit, space), do: ~p"/spaces/#{space.key}"
+
+  # Gera sugestões de key baseadas no nome do space
+  defp generate_key_suggestions(name) when is_binary(name) and byte_size(name) > 0 do
+    words = String.split(name, ~r/\s+/, trim: true)
+
+    suggestions =
+      [
+        # Iniciais de cada palavra (IT Support → ITS)
+        words |> Enum.map(&String.first/1) |> Enum.join(),
+        # Primeira palavra truncada (Support → SUP)
+        words |> List.first() |> String.slice(0, 3),
+        # Duas primeiras letras de cada palavra (IT Support → ITSU)
+        words |> Enum.take(2) |> Enum.map(&String.slice(&1, 0, 2)) |> Enum.join(),
+        # Primeira palavra inteira se pequena
+        if(length(words) == 1 and String.length(List.first(words)) <= 4,
+          do: List.first(words),
+          else: nil
+        )
+      ]
+      |> Enum.reject(&is_nil/1)
+      |> Enum.map(&String.upcase/1)
+      |> Enum.filter(&(String.length(&1) >= 2 and String.length(&1) <= 10))
+      |> Enum.filter(&String.match?(&1, ~r/^[A-Z]+$/))
+      |> Enum.uniq()
+      |> Enum.take(3)
+
+    suggestions
+  end
+
+  defp generate_key_suggestions(_), do: []
 end

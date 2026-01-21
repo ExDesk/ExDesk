@@ -103,16 +103,22 @@ defmodule ExDeskWeb.SpaceLiveTest do
     test "creates space with valid data", %{conn: conn} do
       {:ok, form_live, _html} = live(conn, ~p"/spaces/new/service_desk")
 
+      # Trigger name change to generate suggestions
+      form_live
+      |> form("#space-form", %{"space" => %{"name" => "IT Helpdesk"}})
+      |> render_change()
+
+      # Now select the key from the select field.
+      # "IT Helpdesk" should generate "IH" as a suggestion.
       form_live
       |> form("#space-form", %{
         "space" => %{
-          "name" => "IT Helpdesk",
-          "key" => "ITH"
+          "key" => "IH"
         }
       })
       |> render_submit()
 
-      assert_redirect(form_live, ~p"/spaces/ITH")
+      assert_redirect(form_live, ~p"/spaces/IH")
     end
 
     test "shows validation errors", %{conn: conn} do
