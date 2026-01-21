@@ -18,6 +18,8 @@ defmodule ExDeskWeb.Layouts do
     default: nil,
     doc: "the current scope containing user information"
 
+  attr :spaces, :list, default: [], doc: "list of spaces for sidebar"
+
   slot :inner_block, required: true
 
   def app(assigns) do

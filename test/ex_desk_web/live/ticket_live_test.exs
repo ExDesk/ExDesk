@@ -12,7 +12,7 @@ defmodule ExDeskWeb.TicketLiveTest do
     end
 
     test "lists all tickets", %{conn: conn} do
-      ticket = ticket_fixture(subject: "Help me")
+      _ticket = ticket_fixture(subject: "Help me")
       {:ok, _index_live, html} = live(conn, ~p"/tickets")
 
       assert html =~ "Spaces"
@@ -68,7 +68,7 @@ defmodule ExDeskWeb.TicketLiveTest do
 
       assert render(form_live) =~ "New Ticket"
 
-      result =
+      _result =
         form_live
         |> form("#ticket-form", %{
           "ticket" => %{
@@ -99,7 +99,7 @@ defmodule ExDeskWeb.TicketLiveTest do
 
       assert render(form_live) =~ "Edit Ticket"
 
-      result =
+      _result =
         form_live
         |> form("#ticket-form", %{
           "ticket" => %{"subject" => "Fixed Subject"}

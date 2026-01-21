@@ -1,0 +1,158 @@
+defmodule ExDeskWeb.SpaceLiveTest do
+  use ExDeskWeb.ConnCase, async: true
+
+  import Phoenix.LiveViewTest
+  import ExDesk.AccountsFixtures
+  import ExDesk.SupportFixtures
+
+  describe "TemplateSelection with Live Preview" do
+    setup %{conn: conn} do
+      user = user_fixture()
+      %{conn: log_in_user(conn, user)}
+    end
+
+    test "shows template cards with first one selected by default", %{conn: conn} do
+      {:ok, live, html} = live(conn, ~p"/spaces/new")
+
+      assert html =~ "Choose a template"
+      # First template (Kanban) should be selected by default
+      assert html =~ "selected"
+      assert html =~ "Kanban"
+    end
+
+    test "clicking a template selects it and shows preview", %{conn: conn} do
+      {:ok, live, _html} = live(conn, ~p"/spaces/new")
+
+      # Click on Service Desk template
+      html = live |> element("#template-service_desk") |> render_click()
+
+      # Should now show Service Desk as selected
+      assert html =~ "Service Desk"
+      # Should show live preview for service desk
+      assert html =~ "live-preview"
+    end
+
+    test "shows different preview for each template", %{conn: conn} do
+      {:ok, live, _html} = live(conn, ~p"/spaces/new")
+
+      # Kanban preview should show columns
+      html = render(live)
+      assert html =~ "To Do" or html =~ "Doing" or html =~ "Done"
+
+      # Switch to Project
+      html = live |> element("#template-project") |> render_click()
+      assert html =~ "Project"
+    end
+
+    test "selected template navigates to form on continue", %{conn: conn} do
+      {:ok, live, _html} = live(conn, ~p"/spaces/new")
+
+      # Select service_desk and continue
+      live |> element("#template-service_desk") |> render_click()
+
+      {:ok, _form_live, html} =
+        live
+        |> element("a", "Continue")
+        |> render_click()
+        |> follow_redirect(conn)
+
+      assert html =~ "New Space"
+    end
+  end
+
+  describe "Index" do
+    setup %{conn: conn} do
+      user = user_fixture()
+      %{conn: log_in_user(conn, user)}
+    end
+
+    test "lists all spaces", %{conn: conn} do
+      space = space_fixture(name: "IT Support", key: "IT")
+      {:ok, _index_live, html} = live(conn, ~p"/spaces")
+
+      assert html =~ "Spaces"
+      assert html =~ "IT Support"
+    end
+
+    test "shows empty state when no spaces", %{conn: conn} do
+      {:ok, _index_live, html} = live(conn, ~p"/spaces")
+
+      assert html =~ "No spaces yet"
+    end
+
+    test "deletes space", %{conn: conn} do
+      space = space_fixture(name: "To Delete", key: "DEL")
+      {:ok, index_live, _html} = live(conn, ~p"/spaces")
+
+      assert index_live |> element("#space-#{space.id}") |> has_element?()
+
+      index_live
+      |> element("#space-#{space.id} button[phx-click=\"delete\"]")
+      |> render_click()
+
+      refute index_live |> element("#space-#{space.id}") |> has_element?()
+    end
+  end
+
+  describe "Form" do
+    setup %{conn: conn} do
+      user = user_fixture()
+      %{conn: log_in_user(conn, user)}
+    end
+
+    test "creates space with valid data", %{conn: conn} do
+      {:ok, form_live, _html} = live(conn, ~p"/spaces/new/service_desk")
+
+      form_live
+      |> form("#space-form", %{
+        "space" => %{
+          "name" => "IT Helpdesk",
+          "key" => "ITH"
+        }
+      })
+      |> render_submit()
+
+      assert_redirect(form_live, ~p"/spaces/ITH")
+    end
+
+    test "shows validation errors", %{conn: conn} do
+      {:ok, form_live, _html} = live(conn, ~p"/spaces/new/kanban")
+
+      html =
+        form_live
+        |> form("#space-form", %{
+          "space" => %{"name" => "", "key" => ""}
+        })
+        |> render_submit()
+
+      assert html =~ "can&#39;t be blank"
+    end
+  end
+
+  describe "Show" do
+    setup %{conn: conn} do
+      user = user_fixture()
+      space = space_fixture(name: "My Space", key: "MYSP")
+      %{conn: log_in_user(conn, user), space: space}
+    end
+
+    test "displays space details", %{conn: conn, space: space} do
+      {:ok, _show_live, html} = live(conn, ~p"/spaces/#{space.key}")
+
+      assert html =~ "My Space"
+      assert html =~ "MYSP"
+    end
+
+    test "navigates to edit", %{conn: conn, space: space} do
+      {:ok, show_live, _html} = live(conn, ~p"/spaces/#{space.key}")
+
+      {:ok, _edit_live, html} =
+        show_live
+        |> element("a", "Edit")
+        |> render_click()
+        |> follow_redirect(conn, ~p"/spaces/#{space.key}/edit")
+
+      assert html =~ "Edit Space"
+    end
+  end
+end
