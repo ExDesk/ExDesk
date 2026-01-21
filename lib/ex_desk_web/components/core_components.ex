@@ -55,29 +55,128 @@ defmodule ExDeskWeb.CoreComponents do
       :if={msg = render_slot(@inner_block) || Phoenix.Flash.get(@flash, @kind)}
       id={@id}
       phx-click={JS.push("lv:clear-flash", value: %{key: @kind}) |> hide("##{@id}")}
+      phx-mounted={
+        JS.transition({"", "", ""}, time: :timer.seconds(15))
+        |> JS.push("lv:clear-flash", value: %{key: @kind})
+        |> hide("##{@id}")
+      }
       role="alert"
       class="toast toast-top toast-end z-50"
       {@rest}
     >
       <div class={[
-        "alert w-80 sm:w-96 max-w-80 sm:max-w-96 text-wrap",
-        @kind == :info && "alert-info",
-        @kind == :error && "alert-error"
+        "w-80 sm:w-96 max-w-80 sm:max-w-96 text-wrap",
+        "bg-white dark:bg-base-100 backdrop-blur-sm rounded-lg border border-gray-200 dark:border-zinc-700/50 shadow-2xl overflow-hidden"
       ]}>
-        <.icon :if={@kind == :info} name="hero-information-circle" class="size-5 shrink-0" />
-        <.icon :if={@kind == :error} name="hero-exclamation-circle" class="size-5 shrink-0" />
-        <div>
-          <p :if={@title} class="font-semibold">{@title}</p>
-          
-          <p>{msg}</p>
+        <%!-- Editor Title Bar --%>
+        <div class="flex items-center gap-2 px-3 py-2 bg-gray-50 dark:bg-zinc-800 border-b border-gray-200 dark:border-zinc-700/50">
+          <div class="flex gap-1.5">
+            <div class="w-2.5 h-2.5 rounded-full bg-red-500/80"></div>
+            <div class="w-2.5 h-2.5 rounded-full bg-yellow-500/80"></div>
+            <div class="w-2.5 h-2.5 rounded-full bg-green-500/80"></div>
+          </div>
+          <span class="text-gray-500 dark:text-zinc-500 text-xs font-mono ml-1">
+            iex — ExDesk.Session
+          </span>
+          <div class="flex-1" />
+          <button type="button" class="group cursor-pointer" aria-label={gettext("close")}>
+            <.icon
+              name="hero-x-mark"
+              class="size-4 text-gray-400 dark:text-zinc-500 group-hover:text-gray-600 dark:group-hover:text-zinc-300 transition-colors"
+            />
+          </button>
         </div>
-         <div class="flex-1" />
-        <button type="button" class="group self-start cursor-pointer" aria-label={gettext("close")}>
-          <.icon name="hero-x-mark" class="size-5 opacity-40 group-hover:opacity-70" />
-        </button>
+        <%!-- Terminal Content --%>
+        <div class="p-3 font-mono text-sm">
+          <div class="flex items-center gap-2 text-gray-400 dark:text-zinc-500 text-xs mb-2">
+            <.icon name="hero-chevron-right" class="size-3" /> <span>iex(1)></span>
+          </div>
+          <div class="text-gray-700 dark:text-zinc-300 flex items-center gap-1.5 flex-wrap leading-relaxed">
+            <span
+              class={[
+                "animate-pipeline-appear",
+                if(@kind == :error, do: "text-orange-400", else: "text-purple-400")
+              ]}
+              style="animation-delay: 100ms"
+            >
+              {pipeline_input(msg, @kind)}
+            </span>
+            <span
+              class="text-gray-400 dark:text-zinc-600 animate-pipeline-appear"
+              style="animation-delay: 300ms"
+            >
+              |>
+            </span>
+            <span
+              class="text-purple-600 dark:text-purple-400 font-bold animate-pipeline-appear"
+              style="animation-delay: 500ms"
+            >
+              {pipeline_function(msg, @kind)}
+            </span>
+            <span
+              class="text-gray-400 dark:text-zinc-600 animate-pipeline-appear"
+              style="animation-delay: 700ms"
+            >
+              |>
+            </span>
+            <span
+              class={[
+                "animate-pipeline-appear font-bold",
+                if(@kind == :error, do: "text-red-500", else: "text-green-400")
+              ]}
+              style="animation-delay: 900ms"
+            >
+              {pipeline_result(msg, @kind)}
+            </span>
+          </div>
+        </div>
+        <%!-- Progress bar for auto-close --%>
+        <div class="h-0.5 bg-gray-200 dark:bg-zinc-700/50">
+          <div class={[
+            "h-full animate-shrink-width",
+            if(@kind == :error, do: "bg-red-500/60", else: "bg-green-500/60")
+          ]}>
+          </div>
+        </div>
       </div>
     </div>
     """
+  end
+
+  # Pipeline helpers for flash messages
+  defp pipeline_input(msg, :error), do: inspect(msg)
+
+  defp pipeline_input(msg, :info) do
+    cond do
+      String.contains?(msg, "|>") -> msg |> String.split("|>") |> List.first() |> String.trim()
+      true -> ":session"
+    end
+  end
+
+  defp pipeline_function(_msg, :error), do: "ExDesk.handle()"
+
+  defp pipeline_function(msg, :info) do
+    cond do
+      String.contains?(msg, "|>") ->
+        parts = String.split(msg, "|>")
+        if length(parts) >= 2, do: Enum.at(parts, 1) |> String.trim(), else: "ExDesk.notify()"
+
+      true ->
+        "ExDesk.notify()"
+    end
+  end
+
+  defp pipeline_result(_msg, :error), do: "{:error, :failed}"
+
+  defp pipeline_result(msg, :info) do
+    cond do
+      String.contains?(msg, "|>") ->
+        parts = String.split(msg, "|>")
+        if length(parts) >= 3, do: Enum.at(parts, 2) |> String.trim(), else: ":ok"
+
+      true ->
+        ":ok"
+    end
   end
 
   @doc """
@@ -254,7 +353,7 @@ defmodule ExDeskWeb.CoreComponents do
             {@rest}
           >
             <option :if={@prompt} value="">{@prompt}</option>
-             {Phoenix.HTML.Form.options_for_select(@options, @value)}
+            {Phoenix.HTML.Form.options_for_select(@options, @value)}
           </select>
           <.icon
             :if={@right_icon}
@@ -345,10 +444,10 @@ defmodule ExDeskWeb.CoreComponents do
     <header class={[@actions != [] && "flex items-center justify-between gap-6", "pb-4"]}>
       <div>
         <h1 class="text-lg font-semibold leading-8">{render_slot(@inner_block)}</h1>
-        
+
         <p :if={@subtitle != []} class="text-sm text-base-content/70">{render_slot(@subtitle)}</p>
       </div>
-      
+
       <div class="flex-none">{render_slot(@actions)}</div>
     </header>
     """
@@ -390,11 +489,11 @@ defmodule ExDeskWeb.CoreComponents do
       <thead>
         <tr>
           <th :for={col <- @col}>{col[:label]}</th>
-          
+
           <th :if={@action != []}><span class="sr-only">{gettext("Actions")}</span></th>
         </tr>
       </thead>
-      
+
       <tbody id={@id} phx-update={is_struct(@rows, Phoenix.LiveView.LiveStream) && "stream"}>
         <tr :for={row <- @rows} id={@row_id && @row_id.(row)}>
           <td
@@ -404,7 +503,7 @@ defmodule ExDeskWeb.CoreComponents do
           >
             {render_slot(col, @row_item.(row))}
           </td>
-          
+
           <td :if={@action != []} class="w-0 font-semibold">
             <div class="flex gap-4">
               <%= for action <- @action do %>
@@ -438,7 +537,7 @@ defmodule ExDeskWeb.CoreComponents do
       <li :for={item <- @item} class="list-row">
         <div class="list-col-grow">
           <div class="font-bold">{item.title}</div>
-          
+
           <div>{render_slot(item)}</div>
         </div>
       </li>
