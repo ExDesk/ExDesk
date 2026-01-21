@@ -138,7 +138,7 @@ The provided Docker configuration manages the required infrastructure services (
 
 ## License
 
-Distributed under the MIT License. See `LICENSE` for more information.
+Distributed under the Apache-2.0 license. See `LICENSE` for more information.
 
 ---
 
