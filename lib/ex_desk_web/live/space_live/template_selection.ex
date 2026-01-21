@@ -5,24 +5,18 @@ defmodule ExDeskWeb.SpaceLive.TemplateSelection do
     %{
       id: "kanban",
       name: "Kanban",
-      description: "Work efficiently and visualize work on a board with to do, doing, and done.",
-      icon: "hero-view-columns",
-      color: "#22C55E"
+      description: "Work efficiently and visualize work on a board with to do, doing, and done."
     },
     %{
       id: "service_desk",
       name: "Service Desk",
-      description: "Create one place to collect and manage any type of request.",
-      icon: "hero-inbox",
-      color: "#F97316"
+      description: "Create one place to collect and manage any type of request."
     },
     %{
       id: "project",
       name: "Project",
       description:
-        "Plan, track, and report on big chunks of work, such as a program or initiative.",
-      icon: "hero-clipboard-document-list",
-      color: "#3B82F6"
+        "Plan, track, and report on big chunks of work, such as a program or initiative."
     }
   ]
 
@@ -73,17 +67,10 @@ defmodule ExDeskWeb.SpaceLive.TemplateSelection do
             >
               <div class="card-body p-4">
                 <div class="flex items-center gap-4">
-                  <div
-                    class="size-12 rounded-xl flex items-center justify-center flex-shrink-0"
-                    style={"background-color: #{template.color}"}
-                  >
-                    <.icon name={template.icon} class="size-6 text-white" />
-                  </div>
-                  
                   <div class="flex-1">
                     <h3 class="font-semibold">{template.name}</h3>
                     
-                    <p class="text-sm text-base-content/60 line-clamp-1">{template.description}</p>
+                    <p class="text-sm text-base-content/60">{template.description}</p>
                   </div>
                   
                   <div :if={template.id == @selected_template.id} class="text-primary">
@@ -96,16 +83,7 @@ defmodule ExDeskWeb.SpaceLive.TemplateSelection do
            <%!-- Live Preview Column --%>
           <div class="card bg-base-200" id="live-preview">
             <div class="card-body">
-              <div class="flex items-center gap-2 mb-4">
-                <div
-                  class="size-8 rounded-lg flex items-center justify-center"
-                  style={"background-color: #{@selected_template.color}"}
-                >
-                  <.icon name={@selected_template.icon} class="size-4 text-white" />
-                </div>
-                
-                <h3 class="font-semibold">{@selected_template.name} Preview</h3>
-              </div>
+              <h3 class="font-semibold mb-4">{@selected_template.name} Preview</h3>
               
               <div class="bg-base-300 rounded-xl p-4 min-h-[300px]">
                 <.template_preview template={@selected_template.id} />
@@ -127,7 +105,6 @@ defmodule ExDeskWeb.SpaceLive.TemplateSelection do
     """
   end
 
-  # Kanban preview - board with columns
   defp template_preview(%{template: "kanban"} = assigns) do
     ~H"""
     <div class="grid grid-cols-3 gap-3 h-full">
@@ -156,7 +133,6 @@ defmodule ExDeskWeb.SpaceLive.TemplateSelection do
     """
   end
 
-  # Service Desk preview - ticket queue
   defp template_preview(%{template: "service_desk"} = assigns) do
     ~H"""
     <div class="space-y-3">
@@ -178,32 +154,25 @@ defmodule ExDeskWeb.SpaceLive.TemplateSelection do
     """
   end
 
-  # Project preview - timeline
   defp template_preview(%{template: "project"} = assigns) do
     ~H"""
-    <div class="space-y-4">
+    <div class="space-y-3">
       <div class="flex items-center gap-2">
-        <div class="w-8 h-8 rounded bg-blue-500/20 flex items-center justify-center">
-          <.icon name="hero-flag" class="size-4 text-blue-500" />
-        </div>
+        <div class="w-6 h-6 rounded bg-base-content/10"></div>
         
-        <div class="flex-1 h-3 bg-blue-500/30 rounded-full"></div>
+        <div class="flex-1 h-3 bg-base-content/20 rounded-full"></div>
       </div>
       
       <div class="flex items-center gap-2 ml-4">
-        <div class="w-6 h-6 rounded bg-green-500/20 flex items-center justify-center">
-          <.icon name="hero-check" class="size-3 text-green-500" />
-        </div>
+        <div class="w-5 h-5 rounded bg-base-content/10"></div>
         
-        <div class="flex-1 h-2 bg-green-500/30 rounded-full w-2/3"></div>
+        <div class="flex-1 h-2 bg-base-content/15 rounded-full w-2/3"></div>
       </div>
       
       <div class="flex items-center gap-2 ml-4">
-        <div class="w-6 h-6 rounded bg-orange-500/20 flex items-center justify-center">
-          <.icon name="hero-clock" class="size-3 text-orange-500" />
-        </div>
+        <div class="w-5 h-5 rounded bg-base-content/10"></div>
         
-        <div class="flex-1 h-2 bg-orange-500/30 rounded-full w-1/2"></div>
+        <div class="flex-1 h-2 bg-base-content/15 rounded-full w-1/2"></div>
       </div>
     </div>
     """
