@@ -11,10 +11,10 @@ defmodule ExDeskWeb.DashboardLive do
         <div class="mx-auto max-w-7xl">
           <div class="mb-8">
             <h1 class="text-3xl font-mono font-bold tracking-tight text-base-content">Dashboard</h1>
-            
+
             <p class="mt-2 text-lg text-base-content/70">Overview of your service desk status.</p>
           </div>
-          
+
           <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
             <!-- Stat Card 1 -->
             <div class="card bg-base-200/50 border border-base-300 shadow-sm">
@@ -22,17 +22,17 @@ defmodule ExDeskWeb.DashboardLive do
                 <div class="flex items-center justify-between">
                   <div>
                     <p class="text-sm font-medium text-base-content/60">Total Tickets</p>
-                    
+
                     <p class="text-3xl font-mono font-bold tracking-tight mt-1 text-primary">
                       {@total_tickets}
                     </p>
                   </div>
-                  
+
                   <div class="p-3 bg-primary/10 rounded-full">
                     <.icon name="hero-ticket" class="size-6 text-primary" />
                   </div>
                 </div>
-                
+
                 <div class="mt-4 flex items-center text-sm text-success">
                   <.icon name="hero-arrow-trending-up" class="size-4 mr-1" />
                   <span>12% from last week</span>
@@ -45,17 +45,17 @@ defmodule ExDeskWeb.DashboardLive do
                 <div class="flex items-center justify-between">
                   <div>
                     <p class="text-sm font-medium text-base-content/60">Open Tickets</p>
-                    
+
                     <p class="text-3xl font-mono font-bold tracking-tight mt-1 text-warning">
                       {@open_tickets}
                     </p>
                   </div>
-                  
+
                   <div class="p-3 bg-warning/10 rounded-full">
                     <.icon name="hero-exclamation-circle" class="size-6 text-warning" />
                   </div>
                 </div>
-                
+
                 <div class="mt-4 flex items-center text-sm text-base-content/60">
                   <span>Requires attention</span>
                 </div>
@@ -67,17 +67,17 @@ defmodule ExDeskWeb.DashboardLive do
                 <div class="flex items-center justify-between">
                   <div>
                     <p class="text-sm font-medium text-base-content/60">Assigned to Me</p>
-                    
+
                     <p class="text-3xl font-mono font-bold tracking-tight mt-1 text-secondary">
                       {@assigned_tickets}
                     </p>
                   </div>
-                  
+
                   <div class="p-3 bg-secondary/10 rounded-full">
                     <.icon name="hero-user" class="size-6 text-secondary" />
                   </div>
                 </div>
-                
+
                 <div class="mt-4 flex items-center text-sm text-base-content/60">
                   <span>3 high priority</span>
                 </div>
@@ -89,17 +89,17 @@ defmodule ExDeskWeb.DashboardLive do
                 <div class="flex items-center justify-between">
                   <div>
                     <p class="text-sm font-medium text-base-content/60">Avg Response Time</p>
-                    
+
                     <p class="text-3xl font-mono font-bold tracking-tight mt-1 text-accent">
                       {@avg_response_time}h
                     </p>
                   </div>
-                  
+
                   <div class="p-3 bg-accent/10 rounded-full">
                     <.icon name="hero-clock" class="size-6 text-accent" />
                   </div>
                 </div>
-                
+
                 <div class="mt-4 flex items-center text-sm text-success">
                   <.icon name="hero-arrow-trending-down" class="size-4 mr-1" />
                   <span>15min faster</span>
@@ -112,7 +112,7 @@ defmodule ExDeskWeb.DashboardLive do
             <div class="card bg-base-200/50 border border-base-300 shadow-sm">
               <div class="card-body">
                 <h2 class="card-title text-base-content">Recent Activity</h2>
-                
+
                 <ul class="steps steps-vertical mt-4">
                   <li :for={activity <- @recent_activities} class="step step-primary">
                     <div class="text-left">
@@ -135,7 +135,7 @@ defmodule ExDeskWeb.DashboardLive do
                       </span>
                     </div>
                   </li>
-                  
+
                   <li
                     :if={length(@recent_activities) == 0}
                     class="text-base-content/50 italic text-sm py-4"
@@ -145,22 +145,10 @@ defmodule ExDeskWeb.DashboardLive do
                 </ul>
               </div>
             </div>
-            
-            <div class="card bg-gradient-to-br from-indigo-500 to-purple-600 text-white shadow-xl">
-              <div class="card-body">
-                <h2 class="card-title">Pro Tip</h2>
-                
-                <p>
-                  You can use keyboard shortcuts to navigate quickly between tickets. Press '?' to see the full list.
-                </p>
-                
-                <div class="card-actions justify-end mt-4">
-                  <button class="btn btn-sm btn-ghost bg-white/20 text-white hover:bg-white/30 border-none">
-                    Learn More
-                  </button>
-                </div>
-              </div>
-            </div>
+
+            <.pro_tip>
+              You can use keyboard shortcuts to navigate quickly between tickets. Press '?' to see the full list.
+            </.pro_tip>
           </div>
         </div>
       </div>

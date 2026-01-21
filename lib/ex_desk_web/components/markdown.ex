@@ -1,4 +1,7 @@
 defmodule ExDeskWeb.Markdown do
+  @moduledoc """
+  Components for rendering Markdown content.
+  """
   use Phoenix.Component
 
   @doc """

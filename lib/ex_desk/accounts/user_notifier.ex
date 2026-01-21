@@ -1,4 +1,7 @@
 defmodule ExDesk.Accounts.UserNotifier do
+  @moduledoc """
+  Notifier module for sending email notifications to users.
+  """
   import Swoosh.Email
 
   alias ExDesk.Mailer

@@ -1,4 +1,7 @@
 defmodule ExDesk.Support.Group do
+  @moduledoc """
+  Schema for agent groups.
+  """
   use Ecto.Schema
   import Ecto.Changeset
 

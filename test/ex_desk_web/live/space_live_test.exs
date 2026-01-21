@@ -12,7 +12,7 @@ defmodule ExDeskWeb.SpaceLiveTest do
     end
 
     test "shows template cards with first one selected by default", %{conn: conn} do
-      {:ok, live, html} = live(conn, ~p"/spaces/new")
+      {:ok, _live, html} = live(conn, ~p"/spaces/new")
 
       assert html =~ "Choose a template"
       # First template (Kanban) should be selected by default
@@ -67,7 +67,7 @@ defmodule ExDeskWeb.SpaceLiveTest do
     end
 
     test "lists all spaces", %{conn: conn} do
-      space = space_fixture(name: "IT Support", key: "IT")
+      _space = space_fixture(name: "IT Support", key: "IT")
       {:ok, _index_live, html} = live(conn, ~p"/spaces")
 
       assert html =~ "Spaces"

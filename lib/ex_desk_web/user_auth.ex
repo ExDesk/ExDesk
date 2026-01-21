@@ -1,4 +1,7 @@
 defmodule ExDeskWeb.UserAuth do
+  @moduledoc """
+  Authentication plugs and helpers.
+  """
   use ExDeskWeb, :verified_routes
 
   import Plug.Conn

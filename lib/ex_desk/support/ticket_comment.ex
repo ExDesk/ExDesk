@@ -1,4 +1,7 @@
 defmodule ExDesk.Support.TicketComment do
+  @moduledoc """
+  Schema for ticket comments.
+  """
   use Ecto.Schema
   import Ecto.Changeset
 

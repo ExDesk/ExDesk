@@ -70,6 +70,6 @@ defmodule ExDeskWeb.UserSessionController do
 
   defp welcome_message(user) do
     name = user.name || String.split(user.email, "@") |> List.first()
-    "Welcome back, #{name}!"
+    ":you |> ExDesk.greet(\"#{name}\") |> {:ok, :authenticated}"
   end
 end

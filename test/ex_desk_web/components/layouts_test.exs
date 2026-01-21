@@ -3,6 +3,7 @@ defmodule ExDeskWeb.Components.LayoutsTest do
   import Phoenix.LiveViewTest
   import Phoenix.Component
   alias ExDeskWeb.Layouts
+  import ExDeskWeb.Sidebar
 
   test "sidebar/1 renders avatar when user has avatar_url" do
     user = %ExDesk.Accounts.User{
@@ -13,7 +14,7 @@ defmodule ExDeskWeb.Components.LayoutsTest do
     current_scope = %{user: user}
     assigns = %{current_scope: current_scope}
 
-    html = rendered_to_string(~H"<Layouts.sidebar current_scope={@current_scope} />")
+    html = rendered_to_string(~H"<.sidebar current_scope={@current_scope} />")
 
     assert html =~ ~s(<img src="https://example.com/avatar.png")
     refute html =~ "JE"
@@ -28,7 +29,7 @@ defmodule ExDeskWeb.Components.LayoutsTest do
     current_scope = %{user: user}
     assigns = %{current_scope: current_scope}
 
-    html = rendered_to_string(~H"<Layouts.sidebar current_scope={@current_scope} />")
+    html = rendered_to_string(~H"<.sidebar current_scope={@current_scope} />")
 
     refute html =~ "<img"
     assert html =~ "J"
@@ -44,7 +45,7 @@ defmodule ExDeskWeb.Components.LayoutsTest do
     assigns = %{current_scope: current_scope, spaces: []}
 
     html =
-      rendered_to_string(~H"<Layouts.sidebar current_scope={@current_scope} spaces={@spaces} />")
+      rendered_to_string(~H"<.sidebar current_scope={@current_scope} spaces={@spaces} />")
 
     # Should have SPACES section header
     assert html =~ "Spaces"
@@ -73,7 +74,7 @@ defmodule ExDeskWeb.Components.LayoutsTest do
     assigns = %{current_scope: current_scope, spaces: spaces}
 
     html =
-      rendered_to_string(~H"<Layouts.sidebar current_scope={@current_scope} spaces={@spaces} />")
+      rendered_to_string(~H"<.sidebar current_scope={@current_scope} spaces={@spaces} />")
 
     assert html =~ "IT Support"
     assert html =~ ~s(href="/spaces/IT")

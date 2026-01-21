@@ -89,6 +89,7 @@ defmodule ExDeskWeb do
       # Core UI components
       import ExDeskWeb.CoreComponents
       import ExDeskWeb.Markdown
+      import ExDeskWeb.ProTip
 
       # Common modules used in templates
       alias Phoenix.LiveView.JS

@@ -1,4 +1,7 @@
 defmodule ExDesk.Support.Ticket do
+  @moduledoc """
+  Schema for support tickets.
+  """
   use Ecto.Schema
   import Ecto.Changeset
 

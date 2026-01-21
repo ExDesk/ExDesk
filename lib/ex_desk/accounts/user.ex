@@ -1,4 +1,7 @@
 defmodule ExDesk.Accounts.User do
+  @moduledoc """
+  User schema and changeset validation functions.
+  """
   use Ecto.Schema
   import Ecto.Changeset
 

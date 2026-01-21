@@ -1,0 +1,23 @@
+Checking 73 source files (this might take a while) ...
+
+  Consistency                                                                   
+Ôöâ 
+Ôöâ [C] Ôåù File is using unix line endings while most of the files use windows line 
+Ôöâ       endings.
+Ôöâ       test/support/conn_case.ex:38 #(ExDeskWeb.ConnCase)
+Ôöâ [C] Ôåù File is using unix line endings while most of the files use windows line 
+Ôöâ       endings.
+Ôöâ       test/ex_desk_web/user_auth_test.exs:1 #(ExDeskWeb.UserAuthTest)
+Ôöâ [C] Ôåù File is using unix line endings while most of the files use windows line 
+Ôöâ       endings.
+Ôöâ       test/ex_desk_web/live/user_live/registration_test.exs:1 #(ExDeskWeb.UserLive.RegistrationTest)
+Ôöâ [C] Ôåù File is using unix line endings while most of the files use windows line 
+Ôöâ       endings.
+Ôöâ       lib/ex_desk/accounts/scope.ex:1 #(ExDesk.Accounts.Scope)
+
+Please report incorrect results: https://github.com/rrrene/credo/issues
+
+Analysis took 0.3 seconds (0.07s to load, 0.2s running 56 checks on 73 files)
+434 mods/funs, found 4 consistency issues.
+
+Showing priority issues: Ôåæ Ôåù ÔåÆ  (use `mix credo explain` to explain issues, `mix credo --help` for options).
