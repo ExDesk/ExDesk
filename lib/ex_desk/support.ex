@@ -9,7 +9,6 @@ defmodule ExDesk.Support do
 
   alias ExDesk.Support.{Group, Space, Ticket, TicketActivity, TicketComment}
 
-  # Bodyguard integration
   defdelegate authorize(action, user, params), to: ExDesk.Support.Policy
 
   @doc """
@@ -394,9 +393,6 @@ defmodule ExDesk.Support do
     |> Repo.preload([:actor, :ticket])
   end
 
-  # ============================================================================
-  # Spaces
-  # ============================================================================
 
   @doc """
   Returns the list of all spaces.
@@ -419,6 +415,15 @@ defmodule ExDesk.Support do
   """
   def get_space_by_key(key) do
     Repo.get_by(Space, key: key)
+  end
+
+  @doc """
+  Gets a space by its key.
+  Raises `Ecto.NoResultsError` if not found.
+  """
+  def get_space_by_key!(key) do
+    Space
+    |> Repo.get_by!(key: key)
   end
 
   @doc """

@@ -46,6 +46,13 @@ defmodule ExDeskWeb.Router do
       live "/tickets/new", TicketLive.Index, :new
       live "/tickets/:id/edit", TicketLive.Index, :edit
       live "/tickets/:id", TicketLive.Show, :show
+
+      # Spaces
+      live "/spaces", SpaceLive.Index, :index
+      live "/spaces/new", SpaceLive.TemplateSelection, :new
+      live "/spaces/new/:template", SpaceLive.Form, :new
+      live "/spaces/:key", SpaceLive.Show, :show
+      live "/spaces/:key/edit", SpaceLive.Form, :edit
     end
 
     post "/users/update-password", UserSessionController, :update_password
