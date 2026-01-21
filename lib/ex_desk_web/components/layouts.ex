@@ -70,10 +70,9 @@ defmodule ExDeskWeb.Layouts do
       <!-- Sidebar Header -->
       <div class="h-16 flex items-center gap-3 px-6 border-b border-base-200">
         <.link navigate={~p"/dashboard"} class="flex items-center gap-2 group">
-          <div class="bg-primary/10 text-primary p-1.5 rounded-lg group-hover:bg-primary/20 transition-colors">
-            <.icon name="hero-command-line" class="size-6" />
-          </div>
-           <span class="font-bold text-xl tracking-tight">ExDesk</span>
+          <span class="font-black text-xl tracking-tight">
+            <span class="text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-purple-400 dark:from-purple-400 dark:to-purple-200">Ex</span>Desk
+          </span>
         </.link>
       </div>
       <!-- Navigation -->
@@ -85,7 +84,7 @@ defmodule ExDeskWeb.Layouts do
         <.sidebar_link
           icon="hero-ticket"
           label="Tickets"
-          href={~p"/dashboard"}
+          href={~p"/tickets"}
           badge={to_string(Support.count_total_tickets())}
         />
         <div class="text-xs font-semibold text-base-content/50 uppercase tracking-wider mt-6 mb-2 px-2">
@@ -107,11 +106,15 @@ defmodule ExDeskWeb.Layouts do
       <!-- User Footer -->
       <div :if={@current_scope} class="p-4 border-t border-base-200">
         <div class="flex items-center gap-3 p-3 rounded-xl bg-base-200/50 hover:bg-base-200 transition-colors">
-          <div class="avatar placeholder">
-            <div class="bg-neutral text-neutral-content rounded-full w-9">
-              <span class="text-sm font-semibold">
+          <div class={["avatar", !@current_scope.user.avatar_url && "placeholder"]}>
+            <div class={[
+              "bg-neutral text-neutral-content rounded-full w-9",
+              @current_scope.user.avatar_url && "ring ring-primary ring-offset-base-100 ring-offset-1"
+            ]}>
+              <span :if={!@current_scope.user.avatar_url} class="text-sm font-semibold">
                 {String.first(@current_scope.user.email) |> String.upcase()}
               </span>
+              <img :if={@current_scope.user.avatar_url} src={@current_scope.user.avatar_url} />
             </div>
           </div>
           
