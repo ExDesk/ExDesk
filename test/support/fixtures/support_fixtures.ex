@@ -66,4 +66,23 @@ defmodule ExDesk.SupportFixtures do
 
     comment
   end
+
+  def unique_space_key do
+    suffix = for _ <- 1..4, into: "", do: <<Enum.random(?A..?Z)>>
+    "SP" <> suffix
+  end
+
+  def space_fixture(attrs \\ %{}) do
+    {:ok, space} =
+      attrs
+      |> Enum.into(%{
+        name: "Test Space",
+        key: unique_space_key(),
+        template: :service_desk,
+        color: "#3B82F6"
+      })
+      |> Support.create_space()
+
+    space
+  end
 end

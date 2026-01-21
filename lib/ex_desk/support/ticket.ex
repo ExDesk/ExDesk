@@ -3,7 +3,7 @@ defmodule ExDesk.Support.Ticket do
   import Ecto.Changeset
 
   alias ExDesk.Accounts.User
-  alias ExDesk.Support.{Group, TicketComment, TicketActivity}
+  alias ExDesk.Support.{Group, Space, TicketComment, TicketActivity}
 
   schema "tickets" do
     field :subject, :string
@@ -25,6 +25,7 @@ defmodule ExDesk.Support.Ticket do
     belongs_to :requester, User
     belongs_to :assignee, User
     belongs_to :group, Group
+    belongs_to :space, Space
 
     has_many :comments, TicketComment
     has_many :activities, TicketActivity

@@ -7,7 +7,7 @@ defmodule ExDesk.Support do
   import Ecto.Query, warn: false
   alias ExDesk.Repo
 
-  alias ExDesk.Support.{Group, Ticket, TicketActivity, TicketComment}
+  alias ExDesk.Support.{Group, Space, Ticket, TicketActivity, TicketComment}
 
   # Bodyguard integration
   defdelegate authorize(action, user, params), to: ExDesk.Support.Policy
@@ -392,5 +392,73 @@ defmodule ExDesk.Support do
     |> limit(^limit)
     |> Repo.all()
     |> Repo.preload([:actor, :ticket])
+  end
+
+  # ============================================================================
+  # Spaces
+  # ============================================================================
+
+  @doc """
+  Returns the list of all spaces.
+  """
+  def list_spaces do
+    Space
+    |> order_by([s], asc: s.name)
+    |> Repo.all()
+  end
+
+  @doc """
+  Gets a single space by ID.
+  Raises `Ecto.NoResultsError` if not found.
+  """
+  def get_space!(id), do: Repo.get!(Space, id)
+
+  @doc """
+  Gets a space by its key.
+  Returns nil if not found.
+  """
+  def get_space_by_key(key) do
+    Repo.get_by(Space, key: key)
+  end
+
+  @doc """
+  Creates a space.
+  """
+  def create_space(attrs \\ %{}) do
+    %Space{}
+    |> Space.changeset(attrs)
+    |> Repo.insert()
+  end
+
+  @doc """
+  Updates a space.
+  """
+  def update_space(%Space{} = space, attrs) do
+    space
+    |> Space.changeset(attrs)
+    |> Repo.update()
+  end
+
+  @doc """
+  Deletes a space.
+  """
+  def delete_space(%Space{} = space) do
+    Repo.delete(space)
+  end
+
+  @doc """
+  Returns an `%Ecto.Changeset{}` for tracking space changes.
+  """
+  def change_space(%Space{} = space, attrs \\ %{}) do
+    Space.changeset(space, attrs)
+  end
+
+  @doc """
+  Returns the count of tickets in a space.
+  """
+  def count_tickets_by_space(%Space{id: space_id}) do
+    Ticket
+    |> where([t], t.space_id == ^space_id)
+    |> Repo.aggregate(:count, :id)
   end
 end
