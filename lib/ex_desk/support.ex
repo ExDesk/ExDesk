@@ -393,7 +393,6 @@ defmodule ExDesk.Support do
     |> Repo.preload([:actor, :ticket])
   end
 
-
   @doc """
   Returns the list of all spaces.
   """

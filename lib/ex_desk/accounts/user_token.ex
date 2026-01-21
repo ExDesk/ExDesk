@@ -1,4 +1,7 @@
 defmodule ExDesk.Accounts.UserToken do
+  @moduledoc """
+  Functions for handling user tokens for authentication, password reset, etc.
+  """
   use Ecto.Schema
   import Ecto.Query
   alias ExDesk.Accounts.UserToken

@@ -26,8 +26,6 @@ defmodule ExDesk.SupportActivityTest do
       {:ok, _} = Support.log_activity(ticket.id, user.id, :commented)
 
       activities = Support.list_recent_activities(limit: 10)
-      IO.inspect(Enum.map(activities, & &1.action), label: "ACTIVITIES ORDER")
-      IO.inspect(Enum.map(activities, & &1.inserted_at), label: "TIMESTAMPS")
 
       assert length(activities) >= 3
       [first, second | _rest] = activities

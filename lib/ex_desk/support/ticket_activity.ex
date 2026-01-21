@@ -1,4 +1,7 @@
 defmodule ExDesk.Support.TicketActivity do
+  @moduledoc """
+  Schema for tracking ticket activities/history.
+  """
   use Ecto.Schema
   import Ecto.Changeset
 
