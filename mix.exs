@@ -80,7 +80,8 @@ defmodule ExDesk.MixProject do
       {:mix_unused, "~> 0.4", only: :dev, runtime: false},
       {:dialyxir, "~> 1.4", only: [:dev, :test], runtime: false},
       {:mdex, "~> 0.11"},
-      {:excoveralls, "~> 0.18", only: :test}
+      {:excoveralls, "~> 0.18", only: :test}, 
+      {:live_debugger, "~> 0.5.0", only: :dev}
     ]
   end
 

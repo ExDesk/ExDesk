@@ -2,12 +2,13 @@
 <html lang="en">
   <head>
     <meta charset="utf-8" />
+    {Application.get_env(:live_debugger, :live_debugger_tags)}
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="csrf-token" content={get_csrf_token()} />
     <.live_title default="ExDesk" suffix=" · Phoenix Framework">
       {assigns[:page_title]}
     </.live_title>
-     <link rel="icon" href={~p"/images/icon.png"} type="image/png" />
+    <link rel="icon" href={~p"/images/icon.png"} type="image/png" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
@@ -16,27 +17,50 @@
     /> <link phx-track-static rel="stylesheet" href={~p"/assets/css/app.css"} />
     <script defer phx-track-static type="text/javascript" src={~p"/assets/js/app.js"}>
     </script>
-    
+
     <script>
       (() => {
+        // Detect system preference
+        const getSystemTheme = () => 
+          window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+        
+        const applyTheme = (theme) => {
+          const resolvedTheme = theme === "system" ? getSystemTheme() : theme;
+          document.documentElement.setAttribute("data-theme", resolvedTheme);
+        };
+        
         const setTheme = (theme) => {
           if (theme === "system") {
             localStorage.removeItem("phx:theme");
-            document.documentElement.removeAttribute("data-theme");
           } else {
             localStorage.setItem("phx:theme", theme);
-            document.documentElement.setAttribute("data-theme", theme);
           }
+          applyTheme(theme);
         };
-        if (!document.documentElement.hasAttribute("data-theme")) {
-          setTheme(localStorage.getItem("phx:theme") || "system");
-        }
-        window.addEventListener("storage", (e) => e.key === "phx:theme" && setTheme(e.newValue || "system"));
         
+        // Apply saved theme or system theme on load
+        const savedTheme = localStorage.getItem("phx:theme") || "system";
+        applyTheme(savedTheme);
+        
+        // Listen for OS theme changes
+        window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => {
+          if (!localStorage.getItem("phx:theme")) {
+            applyTheme("system");
+          }
+        });
+        
+        // Listen for storage changes (other tabs)
+        window.addEventListener("storage", (e) => {
+          if (e.key === "phx:theme") {
+            applyTheme(e.newValue || "system");
+          }
+        });
+        
+        // Listen for manual theme toggle
         window.addEventListener("phx:set-theme", (e) => setTheme(e.target.dataset.phxTheme));
       })();
     </script>
   </head>
-  
+
   <body>{@inner_content}</body>
 </html>

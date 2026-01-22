@@ -5,6 +5,8 @@ defmodule ExDeskWeb.Layouts do
   """
   use ExDeskWeb, :html
 
+
+
   embed_templates "layouts/*"
 
   import ExDeskWeb.Sidebar
