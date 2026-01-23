@@ -6,7 +6,7 @@ defmodule ExDeskWeb.TicketLive.Index do
   @impl true
   def render(assigns) do
     ~H"""
-    <Layouts.app flash={@flash} current_scope={@current_scope}>
+    <Layouts.app flash={@flash} current_scope={@current_scope} spaces={@spaces}>
       <div class="header">
         <h1>Tickets</h1>
         <.link navigate={~p"/tickets/new"}>New Ticket</.link>

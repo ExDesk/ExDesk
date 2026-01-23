@@ -108,7 +108,7 @@ defmodule ExDeskWeb.SpaceLive.Form do
   @impl true
   def render(assigns) do
     ~H"""
-    <Layouts.app flash={@flash} current_scope={@current_scope}>
+    <Layouts.app flash={@flash} current_scope={@current_scope} spaces={@spaces}>
       <div class="max-w-2xl mx-auto">
         <div class="mb-8">
           <.link

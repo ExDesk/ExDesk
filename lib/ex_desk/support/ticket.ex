@@ -12,6 +12,8 @@ defmodule ExDesk.Support.Ticket do
     field :subject, :string
     field :description, :string
 
+    field :rank, :integer
+
     field :status, Ecto.Enum,
       values: [:open, :pending, :on_hold, :solved, :closed],
       default: :open

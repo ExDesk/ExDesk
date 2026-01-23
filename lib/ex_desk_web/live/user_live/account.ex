@@ -7,7 +7,7 @@ defmodule ExDeskWeb.UserLive.Account do
   @impl true
   def render(assigns) do
     ~H"""
-    <Layouts.app flash={@flash} current_scope={@current_scope}>
+    <Layouts.app flash={@flash} current_scope={@current_scope} spaces={@spaces}>
       <div class="px-4 py-8 max-w-[1200px] mx-auto">
         <div class="mb-8">
           <.header>

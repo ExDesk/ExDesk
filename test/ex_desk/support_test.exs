@@ -56,6 +56,69 @@ defmodule ExDesk.SupportTest do
       assert ticket.status == :open
     end
 
+    test "create_ticket_in_space/3 sets space_id" do
+      space = space_fixture(template: :kanban)
+      user = user_fixture()
+
+      assert {:ok, %Ticket{} = ticket} =
+               Support.create_ticket_in_space(
+                 space.id,
+                 %{subject: "In space", requester_id: user.id},
+                 user.id
+               )
+
+      assert ticket.space_id == space.id
+    end
+
+    test "move_ticket_on_kanban_board/7 transitions status and persists rank ordering" do
+      space = space_fixture(template: :kanban)
+      user = user_fixture()
+
+      assert {:ok, t1} =
+               Support.create_ticket_in_space(
+                 space.id,
+                 %{subject: "A", requester_id: user.id},
+                 user.id
+               )
+
+      assert {:ok, t2} =
+               Support.create_ticket_in_space(
+                 space.id,
+                 %{subject: "B", requester_id: user.id},
+                 user.id
+               )
+
+      assert {:ok, t3} =
+               Support.create_ticket_in_space(
+                 space.id,
+                 %{subject: "C", requester_id: user.id},
+                 user.id
+               )
+
+      # Move t2 from todo -> done, placing it first in done column
+      assert {:ok, moved} =
+               Support.move_ticket_on_kanban_board(
+                 space.id,
+                 t2.id,
+                 "todo",
+                 "done",
+                 ["#{t1.id}", "#{t3.id}"],
+                 ["#{t2.id}"],
+                 user.id
+               )
+
+      assert moved.status == :solved
+
+      tickets = Support.list_tickets_by_space(space.id)
+
+      # todo column ranks (t1 then t3)
+      assert Enum.find(tickets, &(&1.id == t1.id)).rank == 1
+      assert Enum.find(tickets, &(&1.id == t3.id)).rank == 2
+
+      # done column rank
+      assert Enum.find(tickets, &(&1.id == t2.id)).rank == 1
+    end
+
     test "fetch_ticket!/1 returns ticket with preloaded assocs" do
       ticket = ticket_fixture()
       fetched_ticket = Support.fetch_ticket!(ticket.id)

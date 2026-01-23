@@ -222,7 +222,9 @@ defmodule ExDeskWeb.UserAuth do
     socket = mount_current_scope(socket, session)
 
     if socket.assigns.current_scope && socket.assigns.current_scope.user do
-      {:cont, socket}
+      # Load spaces for sidebar
+      spaces = ExDesk.Support.list_spaces()
+      {:cont, Phoenix.Component.assign(socket, :spaces, spaces)}
     else
       socket =
         socket

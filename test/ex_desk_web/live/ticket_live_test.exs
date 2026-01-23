@@ -54,7 +54,7 @@ defmodule ExDeskWeb.TicketLiveTest do
   describe "Create" do
     setup %{conn: conn} do
       user = user_fixture()
-      %{conn: log_in_user(conn, user)}
+      %{conn: log_in_user(conn, user), user: user}
     end
 
     test "creates a new ticket", %{conn: conn} do
@@ -86,7 +86,36 @@ defmodule ExDeskWeb.TicketLiveTest do
       assert html =~ "My Printer is Broken"
     end
 
+    test "does not show assignee field for regular users", %{conn: conn} do
+      {:ok, index_live, _html} = live(conn, ~p"/tickets")
+
+      {:ok, form_live, _html} =
+        index_live
+        |> element("a", "New Ticket")
+        |> render_click()
+        |> follow_redirect(conn, ~p"/tickets/new")
+
+      refute has_element?(form_live, "#ticket_assignee_id")
+
+      _result =
+        form_live
+        |> form("#ticket-form", %{
+          "ticket" => %{
+            "subject" => "Untrusted Assignee",
+            "description" => "Trying to forge assignee_id",
+            "priority" => "high"
+          }
+        })
+        |> render_submit()
+
+      ticket = ExDesk.Repo.get_by!(ExDesk.Support.Ticket, subject: "Untrusted Assignee")
+      assert is_nil(ticket.assignee_id)
+    end
+
     test "updates ticket in listing", %{conn: conn} do
+      agent = user_fixture(%{role: :agent})
+      conn = log_in_user(conn, agent)
+
       ticket = ticket_fixture(subject: "Typo Subject")
       {:ok, index_live, _html} = live(conn, ~p"/tickets")
 
@@ -110,6 +139,42 @@ defmodule ExDeskWeb.TicketLiveTest do
 
       html = render(form_live)
       assert html =~ "Fixed Subject"
+    end
+  end
+
+  describe "Assign" do
+    setup %{conn: conn} do
+      agent = user_fixture(%{role: :agent})
+      %{conn: log_in_user(conn, agent), agent: agent}
+    end
+
+    test "agent can assign a ticket on create", %{conn: conn} do
+      assignee = user_fixture(%{role: :agent})
+
+      {:ok, index_live, _html} = live(conn, ~p"/tickets")
+
+      {:ok, form_live, _html} =
+        index_live
+        |> element("a", "New Ticket")
+        |> render_click()
+        |> follow_redirect(conn, ~p"/tickets/new")
+
+      assert has_element?(form_live, "#ticket_assignee_id")
+
+      _result =
+        form_live
+        |> form("#ticket-form", %{
+          "ticket" => %{
+            "subject" => "Assigned Ticket",
+            "description" => "This ticket should be assigned",
+            "priority" => "normal",
+            "assignee_id" => "#{assignee.id}"
+          }
+        })
+        |> render_submit()
+
+      ticket = ExDesk.Repo.get_by!(ExDesk.Support.Ticket, subject: "Assigned Ticket")
+      assert ticket.assignee_id == assignee.id
     end
   end
 end
