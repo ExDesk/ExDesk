@@ -150,7 +150,8 @@ defmodule ExDesk.Support do
 
   The sub-task inherits `space_id` and `requester_id` from the parent.
   """
-  def create_subtask(%Ticket{} = parent_ticket, attrs \\ %{}, actor_id \\ nil) when is_map(attrs) do
+  def create_subtask(%Ticket{} = parent_ticket, attrs \\ %{}, actor_id \\ nil)
+      when is_map(attrs) do
     Repo.transaction(fn ->
       changeset = build_subtask_changeset(parent_ticket, attrs)
 

@@ -49,7 +49,13 @@ defmodule ExDesk.Support.TicketSubtasksDbTest do
 
       assert {1, _} = Repo.delete_all(from(t in "tickets", where: t.id == ^parent_id))
 
-      child = Repo.one(from(t in "tickets", where: t.id == ^child_id, select: %{id: t.id, parent_id: t.parent_id}))
+      child =
+        Repo.one(
+          from(t in "tickets",
+            where: t.id == ^child_id,
+            select: %{id: t.id, parent_id: t.parent_id}
+          )
+        )
 
       assert child.id == child_id
       assert is_nil(child.parent_id)
