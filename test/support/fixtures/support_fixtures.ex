@@ -73,6 +73,17 @@ defmodule ExDesk.SupportFixtures do
   end
 
   def space_fixture(attrs \\ %{}) do
+    attrs = Enum.into(attrs, %{})
+
+    {created_by_id, attrs} = Map.pop(attrs, :created_by_id)
+
+    created_by_id =
+      created_by_id ||
+        (
+          user = ExDesk.AccountsFixtures.user_fixture()
+          user.id
+        )
+
     {:ok, space} =
       attrs
       |> Enum.into(%{
@@ -81,7 +92,7 @@ defmodule ExDesk.SupportFixtures do
         template: :service_desk,
         color: "#3B82F6"
       })
-      |> Support.create_space()
+      |> Support.create_space(created_by_id)
 
     space
   end

@@ -1,6 +1,8 @@
 defmodule ExDeskWeb.SpaceLive.Index do
   use ExDeskWeb, :live_view
 
+  import ExDeskWeb.Authorization, only: [can?: 2, can?: 3]
+
   alias ExDesk.Support
 
   @impl true
@@ -16,9 +18,13 @@ defmodule ExDeskWeb.SpaceLive.Index do
   @impl true
   def handle_event("delete", %{"id" => id}, socket) do
     space = Support.get_space!(id)
-    {:ok, _} = Support.delete_space(space)
 
-    {:noreply, assign(socket, :spaces, Support.list_spaces())}
+    if can?(socket.assigns.current_scope.user, :delete_space, space) do
+      {:ok, _} = Support.delete_space(space)
+      {:noreply, assign(socket, :spaces, Support.list_spaces())}
+    else
+      {:noreply, put_flash(socket, :error, "You are not authorized to delete this space.")}
+    end
   end
 
   @impl true
@@ -34,6 +40,7 @@ defmodule ExDeskWeb.SpaceLive.Index do
           </div>
 
           <.link
+            :if={can?(@current_scope.user, :create_space)}
             navigate={~p"/spaces/new"}
             class="btn btn-primary"
           >
@@ -82,10 +89,15 @@ defmodule ExDeskWeb.SpaceLive.Index do
                 </p>
 
                 <div class="card-actions justify-end mt-4">
-                  <.link navigate={~p"/spaces/#{space.key}/edit"} class="btn btn-ghost btn-sm">
+                  <.link
+                    :if={can?(@current_scope.user, :update_space, space)}
+                    navigate={~p"/spaces/#{space.key}/edit"}
+                    class="btn btn-ghost btn-sm"
+                  >
                     Edit
                   </.link>
                   <button
+                    :if={can?(@current_scope.user, :delete_space, space)}
                     phx-click="delete"
                     phx-value-id={space.id}
                     data-confirm="Are you sure you want to delete this space?"

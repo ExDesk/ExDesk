@@ -1,6 +1,8 @@
 defmodule ExDeskWeb.SpaceLive.Form do
   use ExDeskWeb, :live_view
 
+  import ExDeskWeb.Authorization, only: [can?: 2, can?: 3]
+
   alias ExDesk.Support
   alias ExDesk.Support.Space
 
@@ -14,21 +16,36 @@ defmodule ExDeskWeb.SpaceLive.Form do
   def mount(params, _session, socket) do
     {action, space, template} = resolve_action(params)
 
-    changeset = Support.change_space(space)
-    suggestions = generate_key_suggestions(space.name || "")
+    user = socket.assigns.current_scope.user
 
-    {:ok,
-     socket
-     |> assign(:action, action)
-     |> assign(:space, space)
-     |> assign(:template, template)
-     |> assign(:key_suggestions, suggestions)
-     |> assign(
-       :template_info,
-       Map.get(@template_info, template, %{name: "Custom", color: "#6B7280"})
-     )
-     |> assign(:page_title, page_title(action))
-     |> assign(:form, to_form(changeset))}
+    allowed? =
+      case action do
+        :new -> can?(user, :create_space)
+        :edit -> can?(user, :update_space, space)
+      end
+
+    if !allowed? do
+      {:ok,
+       socket
+       |> put_flash(:error, "You are not authorized to modify this space.")
+       |> redirect(to: back_path(action, space))}
+    else
+      changeset = Support.change_space(space)
+      suggestions = generate_key_suggestions(space.name || "")
+
+      {:ok,
+       socket
+       |> assign(:action, action)
+       |> assign(:space, space)
+       |> assign(:template, template)
+       |> assign(:key_suggestions, suggestions)
+       |> assign(
+         :template_info,
+         Map.get(@template_info, template, %{name: "Custom", color: "#6B7280"})
+       )
+       |> assign(:page_title, page_title(action))
+       |> assign(:form, to_form(changeset))}
+    end
   end
 
   defp resolve_action(%{"key" => key}) do
@@ -79,8 +96,9 @@ defmodule ExDeskWeb.SpaceLive.Form do
 
   defp save_space(socket, :new, space_params) do
     space_params = Map.put(space_params, "template", socket.assigns.template)
+    created_by_id = socket.assigns.current_scope.user.id
 
-    case Support.create_space(space_params) do
+    case Support.create_space(space_params, created_by_id) do
       {:ok, space} ->
         {:noreply,
          socket

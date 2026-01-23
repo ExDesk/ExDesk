@@ -54,10 +54,40 @@ defmodule ExDeskWeb.TicketLiveTest do
   describe "Create" do
     setup %{conn: conn} do
       user = user_fixture()
-      %{conn: log_in_user(conn, user), user: user}
+      space = space_fixture()
+
+      %{conn: log_in_user(conn, user), user: user, space: space}
     end
 
-    test "creates a new ticket", %{conn: conn} do
+    test "requires a space on create", %{conn: conn} do
+      {:ok, index_live, _html} = live(conn, ~p"/tickets")
+
+      {:ok, form_live, _html} =
+        index_live
+        |> element("a", "New Ticket")
+        |> render_click()
+        |> follow_redirect(conn, ~p"/tickets/new")
+
+      assert has_element?(form_live, "#ticket_space_id")
+
+      html =
+        form_live
+        |> form("#ticket-form", %{
+          "ticket" => %{
+            "subject" => "Missing Space",
+            "description" => "Should fail",
+            "priority" => "high"
+          }
+        })
+        |> render_submit()
+
+      assert has_element?(form_live, "#ticket-form")
+      assert has_element?(form_live, "#ticket_space_id")
+      assert html =~ "can&#39;t be blank"
+      refute ExDesk.Repo.get_by(ExDesk.Support.Ticket, subject: "Missing Space")
+    end
+
+    test "creates a new ticket", %{conn: conn, space: space} do
       {:ok, index_live, _html} = live(conn, ~p"/tickets")
 
       {:ok, form_live, _html} =
@@ -72,6 +102,7 @@ defmodule ExDeskWeb.TicketLiveTest do
         form_live
         |> form("#ticket-form", %{
           "ticket" => %{
+            "space_id" => "#{space.id}",
             "subject" => "My Printer is Broken",
             "description" => "It makes a loud noise",
             "priority" => "high"
@@ -84,9 +115,12 @@ defmodule ExDeskWeb.TicketLiveTest do
       # Verify it appears on index
       html = render(form_live)
       assert html =~ "My Printer is Broken"
+
+      ticket = ExDesk.Repo.get_by!(ExDesk.Support.Ticket, subject: "My Printer is Broken")
+      assert ticket.space_id == space.id
     end
 
-    test "does not show assignee field for regular users", %{conn: conn} do
+    test "does not show assignee field for regular users", %{conn: conn, space: space} do
       {:ok, index_live, _html} = live(conn, ~p"/tickets")
 
       {:ok, form_live, _html} =
@@ -101,6 +135,7 @@ defmodule ExDeskWeb.TicketLiveTest do
         form_live
         |> form("#ticket-form", %{
           "ticket" => %{
+            "space_id" => "#{space.id}",
             "subject" => "Untrusted Assignee",
             "description" => "Trying to forge assignee_id",
             "priority" => "high"
@@ -145,10 +180,12 @@ defmodule ExDeskWeb.TicketLiveTest do
   describe "Assign" do
     setup %{conn: conn} do
       agent = user_fixture(%{role: :agent})
-      %{conn: log_in_user(conn, agent), agent: agent}
+      space = space_fixture()
+
+      %{conn: log_in_user(conn, agent), agent: agent, space: space}
     end
 
-    test "agent can assign a ticket on create", %{conn: conn} do
+    test "agent can assign a ticket on create", %{conn: conn, space: space} do
       assignee = user_fixture(%{role: :agent})
 
       {:ok, index_live, _html} = live(conn, ~p"/tickets")
@@ -165,6 +202,7 @@ defmodule ExDeskWeb.TicketLiveTest do
         form_live
         |> form("#ticket-form", %{
           "ticket" => %{
+            "space_id" => "#{space.id}",
             "subject" => "Assigned Ticket",
             "description" => "This ticket should be assigned",
             "priority" => "normal",
@@ -175,6 +213,7 @@ defmodule ExDeskWeb.TicketLiveTest do
 
       ticket = ExDesk.Repo.get_by!(ExDesk.Support.Ticket, subject: "Assigned Ticket")
       assert ticket.assignee_id == assignee.id
+      assert ticket.space_id == space.id
     end
   end
 end

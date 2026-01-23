@@ -43,12 +43,17 @@ defmodule ExDeskWeb.SpaceLive.Show do
   @impl true
   def handle_event("delete", _params, socket) do
     space = socket.assigns.space
-    {:ok, _} = Support.delete_space(space)
 
-    {:noreply,
-     socket
-     |> put_flash(:info, "Space deleted successfully")
-     |> push_navigate(to: ~p"/spaces")}
+    if can?(socket.assigns.current_scope.user, :delete_space, space) do
+      {:ok, _} = Support.delete_space(space)
+
+      {:noreply,
+       socket
+       |> put_flash(:info, "Space deleted successfully")
+       |> push_navigate(to: ~p"/spaces")}
+    else
+      {:noreply, put_flash(socket, :error, "You are not authorized to delete this space.")}
+    end
   end
 
   @impl true
@@ -170,11 +175,16 @@ defmodule ExDeskWeb.SpaceLive.Show do
                 <.icon name="hero-plus" class="size-4" /> New ticket
               </button>
 
-              <.link navigate={~p"/spaces/#{@space.key}/edit"} class="btn btn-ghost btn-sm">
+              <.link
+                :if={can?(@current_scope.user, :update_space, @space)}
+                navigate={~p"/spaces/#{@space.key}/edit"}
+                class="btn btn-ghost btn-sm"
+              >
                 <.icon name="hero-pencil" class="size-4" /> Edit
               </.link>
 
               <button
+                :if={can?(@current_scope.user, :delete_space, @space)}
                 phx-click="delete"
                 data-confirm="Are you sure you want to delete this space? This action cannot be undone."
                 class="btn btn-ghost btn-sm text-error"
@@ -196,15 +206,17 @@ defmodule ExDeskWeb.SpaceLive.Show do
               count={@todo_count}
               list_id="kanban-todo-tickets"
               tickets_stream={@streams.todo_tickets}
+              return_to={~p"/spaces/#{@space.key}"}
             />
 
             <.kanban_column
               id="kanban-col-doing"
               column="doing"
-              title="Doing"
+              title="In progress"
               count={@doing_count}
               list_id="kanban-doing-tickets"
               tickets_stream={@streams.doing_tickets}
+              return_to={~p"/spaces/#{@space.key}"}
             />
 
             <.kanban_column
@@ -214,6 +226,7 @@ defmodule ExDeskWeb.SpaceLive.Show do
               count={@done_count}
               list_id="kanban-done-tickets"
               tickets_stream={@streams.done_tickets}
+              return_to={~p"/spaces/#{@space.key}"}
             />
           </div>
 
@@ -285,10 +298,15 @@ defmodule ExDeskWeb.SpaceLive.Show do
             </div>
 
             <div class="flex gap-2">
-              <.link navigate={~p"/spaces/#{@space.key}/edit"} class="btn btn-ghost">
+              <.link
+                :if={can?(@current_scope.user, :update_space, @space)}
+                navigate={~p"/spaces/#{@space.key}/edit"}
+                class="btn btn-ghost"
+              >
                 <.icon name="hero-pencil" class="size-4" /> Edit
               </.link>
               <button
+                :if={can?(@current_scope.user, :delete_space, @space)}
                 phx-click="delete"
                 data-confirm="Are you sure you want to delete this space? This action cannot be undone."
                 class="btn btn-ghost text-error"
@@ -349,6 +367,7 @@ defmodule ExDeskWeb.SpaceLive.Show do
   attr :count, :integer, required: true
   attr :list_id, :string, required: true
   attr :tickets_stream, :any, required: true
+  attr :return_to, :string, required: true
 
   def kanban_column(assigns) do
     ~H"""
@@ -383,7 +402,7 @@ defmodule ExDeskWeb.SpaceLive.Show do
             data-ticket-id={ticket.id}
             data-kanban-column={@column}
           >
-            <.ticket_card ticket={ticket} />
+            <.ticket_card ticket={ticket} return_to={@return_to} />
           </div>
         </div>
       </div>
@@ -392,11 +411,12 @@ defmodule ExDeskWeb.SpaceLive.Show do
   end
 
   attr :ticket, :any, required: true
+  attr :return_to, :string, required: true
 
   def ticket_card(assigns) do
     ~H"""
     <.link
-      navigate={~p"/tickets/#{@ticket}"}
+      navigate={~p"/tickets/#{@ticket}?return_to=#{@return_to}"}
       class="group block rounded-xl border border-base-300 bg-base-100 p-3 shadow-sm transition hover:-translate-y-px hover:shadow-md"
     >
       <div class="flex items-start justify-between gap-3">

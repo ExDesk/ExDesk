@@ -37,16 +37,20 @@ defmodule ExDesk.SupportSpacesTest do
       assert Support.get_space_by_key("NOPE") == nil
     end
 
-    test "create_space/1 with valid data creates a space" do
-      assert {:ok, %Space{} = space} = Support.create_space(@valid_attrs)
+    test "create_space/2 with valid data creates a space" do
+      user = user_fixture()
+
+      assert {:ok, %Space{} = space} = Support.create_space(@valid_attrs, user.id)
       assert space.name == "IT Support"
       assert space.key == "IT"
       assert space.template == :service_desk
       assert space.color == "#3B82F6"
+      assert space.created_by_id == user.id
     end
 
-    test "create_space/1 with invalid data returns error changeset" do
-      assert {:error, %Ecto.Changeset{}} = Support.create_space(@invalid_attrs)
+    test "create_space/2 with invalid data returns error changeset" do
+      user = user_fixture()
+      assert {:error, %Ecto.Changeset{}} = Support.create_space(@invalid_attrs, user.id)
     end
 
     test "update_space/2 with valid data updates the space" do

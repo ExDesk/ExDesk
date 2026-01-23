@@ -172,11 +172,11 @@ defmodule ExDeskWeb.SpaceLive.TemplateSelection do
           <div class="w-2/3 h-1.5 bg-base-content/10 rounded"></div>
         </div>
       </div>
-      <!-- Doing Column -->
+      <!-- In progress Column -->
       <div class="flex flex-col gap-2">
         <div class="flex items-center justify-between mb-1">
           <span class="text-[9px] font-bold uppercase tracking-wider text-base-content/40">
-            Doing
+            In progress
           </span>
         </div>
 
