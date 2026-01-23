@@ -1,5 +1,5 @@
 defmodule ExDeskWeb.TicketLiveSubtasksTest do
-  use ExDeskWeb.ConnCase, async: true
+  use ExDeskWeb.ConnCase, async: false
 
   import Phoenix.LiveViewTest
 
@@ -56,6 +56,31 @@ defmodule ExDeskWeb.TicketLiveSubtasksTest do
 
       # also ensure direct API works for listing
       assert [%Ticket{} | _] = Support.list_subtasks(parent.id)
+    end
+
+    test "toggles a sub-task status from the parent show page", %{conn: conn, user: user} do
+      parent = ticket_fixture(subject: "Parent")
+
+      assert {:ok, %Ticket{} = child} =
+               Support.create_subtask(parent, %{subject: "Child Toggle"}, user.id)
+
+      {:ok, view, _html} = live(conn, ~p"/tickets/#{parent}")
+
+      assert Repo.get!(Ticket, child.id).status == :open
+
+      _html =
+        view
+        |> element("#subtask-done-#{child.id}")
+        |> render_click()
+
+      assert Repo.get!(Ticket, child.id).status == :solved
+
+      _html =
+        view
+        |> element("#subtask-done-#{child.id}")
+        |> render_click()
+
+      assert Repo.get!(Ticket, child.id).status == :open
     end
   end
 end
