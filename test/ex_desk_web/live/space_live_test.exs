@@ -236,4 +236,42 @@ defmodule ExDeskWeb.SpaceLiveTest do
       assert has_element?(view, "#kanban-col-todo #kanban-ticket-#{ticket.id}")
     end
   end
+
+  describe "Show (kanban) assignee" do
+    setup %{conn: conn} do
+      agent = user_fixture(%{role: :agent})
+      assignee = user_fixture(%{role: :agent})
+      space = space_fixture(template: :kanban)
+
+      %{conn: log_in_user(conn, agent), agent: agent, assignee: assignee, space: space}
+    end
+
+    test "agent can assign a new ticket in the space", %{
+      conn: conn,
+      assignee: assignee,
+      space: space
+    } do
+      {:ok, view, _html} = live(conn, ~p"/spaces/#{space.key}")
+
+      view |> element("#space-new-ticket") |> render_click()
+
+      assert has_element?(view, "#space-ticket-form")
+      assert has_element?(view, "#ticket_assignee_id")
+
+      view
+      |> form("#space-ticket-form", %{
+        "ticket" => %{
+          "subject" => "Assigned from Space",
+          "description" => "Created from kanban",
+          "priority" => "high",
+          "assignee_id" => "#{assignee.id}"
+        }
+      })
+      |> render_submit()
+
+      ticket = ExDesk.Repo.get_by!(Support.Ticket, subject: "Assigned from Space")
+      assert ticket.space_id == space.id
+      assert ticket.assignee_id == assignee.id
+    end
+  end
 end

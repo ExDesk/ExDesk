@@ -11,6 +11,18 @@ defmodule ExDesk.Accounts do
   ## Database getters
 
   @doc """
+  Lists users that can be assigned to tickets.
+
+  Returns active agents/admins ordered by email.
+  """
+  def list_agents do
+    User
+    |> where([u], u.role in [:agent, :admin] and u.is_active == true)
+    |> order_by([u], asc: u.email)
+    |> Repo.all()
+  end
+
+  @doc """
   Gets a user by email.
 
   ## Examples

@@ -1,6 +1,7 @@
 defmodule ExDeskWeb.SpaceLive.Show do
   use ExDeskWeb, :live_view
 
+  alias ExDesk.Accounts
   alias ExDesk.Support
   alias Phoenix.LiveView.JS
 
@@ -9,6 +10,16 @@ defmodule ExDeskWeb.SpaceLive.Show do
     space = Support.get_space_by_key!(key)
     ticket_count = Support.count_tickets_by_space(space)
 
+    show_assignee? = can?(socket.assigns.current_scope.user, :assign_ticket)
+
+    assignee_options =
+      if show_assignee? do
+        Accounts.list_agents()
+        |> Enum.map(fn u -> {u.email, u.id} end)
+      else
+        []
+      end
+
     socket =
       socket
       |> assign(:page_title, space.name)
@@ -16,6 +27,8 @@ defmodule ExDeskWeb.SpaceLive.Show do
       |> assign(:ticket_count, ticket_count)
       |> assign(:show_new_ticket_modal?, false)
       |> assign(:new_ticket_form, new_ticket_form())
+      |> assign(:show_assignee?, show_assignee?)
+      |> assign(:assignee_options, assignee_options)
 
     socket =
       if space.template == :kanban do
@@ -53,7 +66,7 @@ defmodule ExDeskWeb.SpaceLive.Show do
 
   @impl true
   def handle_event("validate_new_ticket", %{"ticket" => ticket_params}, socket) do
-    ticket_params = Map.put(ticket_params, "requester_id", socket.assigns.current_scope.user.id)
+    ticket_params = sanitize_new_ticket_params(socket, ticket_params)
 
     changeset =
       %Support.Ticket{}
@@ -67,7 +80,7 @@ defmodule ExDeskWeb.SpaceLive.Show do
   def handle_event("create_new_ticket", %{"ticket" => ticket_params}, socket) do
     space = socket.assigns.space
     actor_id = socket.assigns.current_scope.user.id
-    ticket_params = Map.put(ticket_params, "requester_id", actor_id)
+    ticket_params = sanitize_new_ticket_params(socket, ticket_params)
 
     case Support.create_ticket_in_space(space.id, ticket_params, actor_id) do
       {:ok, _ticket} ->
@@ -227,6 +240,15 @@ defmodule ExDeskWeb.SpaceLive.Show do
           >
             <.input field={@new_ticket_form[:subject]} type="text" label="Summary" />
             <.input field={@new_ticket_form[:description]} type="textarea" label="Description" />
+
+            <.input
+              :if={@show_assignee?}
+              field={@new_ticket_form[:assignee_id]}
+              type="select"
+              label="Assignee"
+              prompt="Unassigned"
+              options={@assignee_options}
+            />
 
             <.input
               field={@new_ticket_form[:priority]}
@@ -440,4 +462,14 @@ defmodule ExDeskWeb.SpaceLive.Show do
   defp priority_badge_class(:high), do: "badge-warning"
   defp priority_badge_class(:urgent), do: "badge-error"
   defp priority_badge_class(_), do: ""
+
+  defp sanitize_new_ticket_params(socket, ticket_params) when is_map(ticket_params) do
+    ticket_params = Map.put(ticket_params, "requester_id", socket.assigns.current_scope.user.id)
+
+    if can?(socket.assigns.current_scope.user, :assign_ticket) do
+      ticket_params
+    else
+      Map.drop(ticket_params, ["assignee_id"])
+    end
+  end
 end
