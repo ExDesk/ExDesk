@@ -32,12 +32,12 @@ defmodule ExDeskWeb.UserLive.Login do
             alt=""
           />
         </div>
-        
+
         <div class="relative z-10 flex flex-col items-center max-w-lg text-center">
           <h1 class="text-6xl font-black tracking-tighter mb-2 text-white drop-shadow-lg">
             <span class="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-purple-200">Ex</span>Desk
           </h1>
-          
+
           <p class="text-zinc-400 text-sm font-medium tracking-wide mb-8">
             IT Service Management, Simplified
           </p>
@@ -47,19 +47,19 @@ defmodule ExDeskWeb.UserLive.Login do
             <div class="flex items-center gap-2 px-4 py-2.5 bg-zinc-800 border-b border-zinc-700/50">
               <div class="flex gap-1.5">
                 <div class="w-3 h-3 rounded-full bg-red-500/80"></div>
-                
+
                 <div class="w-3 h-3 rounded-full bg-yellow-500/80"></div>
-                
+
                 <div class="w-3 h-3 rounded-full bg-green-500/80"></div>
               </div>
-               <span class="text-zinc-500 text-xs font-mono ml-2">iex — ExDesk.Session</span>
+              <span class="text-zinc-500 text-xs font-mono ml-2">iex — ExDesk.Session</span>
             </div>
             <!-- Editor Content -->
             <div class="p-4 font-mono text-sm">
               <div class="flex items-center gap-2 text-zinc-500 text-xs mb-3">
                 <.icon name="hero-chevron-right" class="size-3" /> <span>iex(1)></span>
               </div>
-              
+
               <div class="text-zinc-300 flex items-center gap-1 flex-wrap">
                 <span
                   class={[
@@ -105,7 +105,7 @@ defmodule ExDeskWeb.UserLive.Login do
           <!-- Logo for Mobile/Form Context -->
           <div class="text-center mb-12">
             <h2 class="text-3xl font-bold text-base-content tracking-tight">Welcome back</h2>
-            
+
             <div class="mt-3 text-base text-base-content/70">
               <%= if @current_scope do %>
                 Please reauthenticate to continue.
@@ -113,7 +113,7 @@ defmodule ExDeskWeb.UserLive.Login do
                 Don't have an account? Contact your administrator.
               <% end %>
             </div>
-            
+
             <p
               :if={@has_error}
               class="mt-4 text-sm text-error font-medium flex items-center justify-center gap-2"
@@ -122,18 +122,18 @@ defmodule ExDeskWeb.UserLive.Login do
               Invalid credentials. Please check your email and password.
             </p>
           </div>
-          
+
           <div :if={local_mail_adapter?()} class="alert alert-info mb-8 shadow-sm">
             <.icon name="hero-information-circle" class="size-6 shrink-0" />
             <div>
               <p class="font-bold">Local Mail Adapter</p>
-              
+
               <p class="text-sm">
                 Visit <.link href="/dev/mailbox" class="underline">mailbox</.link> to see emails.
               </p>
             </div>
           </div>
-          
+
           <div class="space-y-8">
             <.form
               :let={f}
@@ -181,7 +181,7 @@ defmodule ExDeskWeb.UserLive.Login do
                   </label>
                 </div>
               </div>
-              
+
               <div class="pt-2 space-y-4">
                 <button
                   type="submit"
@@ -196,14 +196,14 @@ defmodule ExDeskWeb.UserLive.Login do
                   <div class="absolute inset-0 flex items-center">
                     <div class="w-full border-t-2 border-base-300/50"></div>
                   </div>
-                  
+
                   <div class="relative flex justify-center">
                     <span class="px-4 bg-white dark:bg-base-100 text-base-content/70 text-sm font-medium uppercase tracking-wider">
                       or
                     </span>
                   </div>
                 </div>
-                
+
                 <button
                   type="submit"
                   name="action"
@@ -217,7 +217,7 @@ defmodule ExDeskWeb.UserLive.Login do
             </.form>
           </div>
         </div>
-        
+
         <div class="absolute bottom-6 left-0 w-full text-center">
           <p class="text-xs text-base-content/40 font-medium">
             © 2026 ExDesk Inc. • Privacy Policy • Terms of Service • Help Center

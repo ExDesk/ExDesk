@@ -15,7 +15,7 @@ defmodule ExDeskWeb.UserLive.Account do
             <:subtitle>{header_subtitle(@live_action)}</:subtitle>
           </.header>
         </div>
-         <.account_nav current_page={@live_action} />
+        <.account_nav current_page={@live_action} />
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
           <div class="lg:col-span-2 space-y-6">
             <div class="card bg-base-100 shadow-xl border border-base-200">
@@ -27,7 +27,7 @@ defmodule ExDeskWeb.UserLive.Account do
                       <span>You have unsaved changes</span>
                     </div>
                   <% end %>
-                  
+
                   <.form
                     for={@profile_form}
                     id="profile_form"
@@ -76,7 +76,7 @@ defmodule ExDeskWeb.UserLive.Account do
                             left_icon="hero-photo"
                           />
                         </div>
-                        
+
                         <.button
                           type="button"
                           phx-click="preview_avatar"
@@ -85,13 +85,13 @@ defmodule ExDeskWeb.UserLive.Account do
                           Preview
                         </.button>
                       </div>
-                      
+
                       <%= if @avatar_preview_url do %>
                         <div class="mt-2 p-2 border rounded-lg bg-base-50">
                           <div class="text-xs font-bold text-base-content/50 uppercase mb-1">
                             Preview
                           </div>
-                          
+
                           <img
                             src={@avatar_preview_url}
                             class="h-20 w-20 rounded-full object-cover border bg-base-200"
@@ -100,7 +100,7 @@ defmodule ExDeskWeb.UserLive.Account do
                         </div>
                       <% end %>
                     </div>
-                    
+
                     <div class="space-y-2">
                       <div class="flex items-center justify-between">
                         <label class="label font-semibold py-0">Bio / Notes</label>
@@ -108,7 +108,7 @@ defmodule ExDeskWeb.UserLive.Account do
                           Markdown Supported
                         </span>
                       </div>
-                      
+
                       <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <.input
                           field={@profile_form[:notes]}
@@ -120,14 +120,14 @@ defmodule ExDeskWeb.UserLive.Account do
                           <div class="text-[10px] uppercase text-base-content/30 font-bold mb-2">
                             Live Preview
                           </div>
-                          
+
                           <.markdown content={
                             @profile_form[:notes].value || "Nothing to preview yet..."
                           } />
                         </div>
                       </div>
                     </div>
-                    
+
                     <div class="card-actions justify-start pt-4 border-t border-base-200">
                       <.button
                         variant="primary"
@@ -142,7 +142,7 @@ defmodule ExDeskWeb.UserLive.Account do
                     </div>
                   </.form>
                 <% end %>
-                
+
                 <%= if @live_action == :preferences do %>
                   <.form
                     for={@preferences_form}
@@ -176,7 +176,7 @@ defmodule ExDeskWeb.UserLive.Account do
                         ]}
                       />
                     </div>
-                    
+
                     <div class="card-actions justify-start pt-4 border-t border-base-200">
                       <.button variant="primary" phx-disable-with="Saving...">
                         Save Preferences
@@ -187,7 +187,7 @@ defmodule ExDeskWeb.UserLive.Account do
               </div>
             </div>
           </div>
-          
+
           <div class="hidden lg:block lg:col-span-1">
             <.user_card_preview
               user_params={@user_params}

@@ -8,7 +8,7 @@ defmodule ExDeskWeb.TicketLive.FormComponent do
     ~H"""
     <div>
       <.header>{@title}</.header>
-      
+
       <.simple_form
         for={@form}
         id="ticket-form"

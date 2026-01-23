@@ -12,7 +12,7 @@ defmodule ExDeskWeb.SpaceLive.Show do
      socket
      |> assign(:page_title, space.name)
      |> assign(:space, space)
-     |> assign(:ticket_count, ticket_count)}    
+     |> assign(:ticket_count, ticket_count)}
   end
 
   @impl true
@@ -63,7 +63,7 @@ defmodule ExDeskWeb.SpaceLive.Show do
             </button>
           </div>
         </div>
-         <%!-- Description --%>
+        <%!-- Description --%>
         <div :if={@space.description} class="card bg-base-200">
           <div class="card-body">
             <h3 class="font-semibold mb-2">Description</h3>
@@ -71,7 +71,7 @@ defmodule ExDeskWeb.SpaceLive.Show do
             <p class="text-base-content/70">{@space.description}</p>
           </div>
         </div>
-         <%!-- Stats --%>
+        <%!-- Stats --%>
         <div class="grid gap-4 md:grid-cols-3">
           <div class="card bg-base-200">
             <div class="card-body">
@@ -97,7 +97,7 @@ defmodule ExDeskWeb.SpaceLive.Show do
             </div>
           </div>
         </div>
-         <%!-- Actions --%>
+        <%!-- Actions --%>
         <div class="flex gap-3">
           <.link navigate={~p"/spaces"} class="btn btn-ghost">
             <.icon name="hero-arrow-left" class="size-4" /> Back to Spaces

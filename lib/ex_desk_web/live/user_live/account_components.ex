@@ -77,20 +77,20 @@ defmodule ExDeskWeb.UserLive.AccountComponents do
               />
             </div>
           </div>
-          
+
           <div>
             <h2 class="text-xl font-bold text-base-content">
               {Map.get(@user_params, "name") || @current_user.name || "Anonymous User"}
             </h2>
-            
+
             <p class="text-sm text-base-content/60 font-medium">
               {Map.get(@user_params, "job_title") || @current_user.job_title || "No Title"}
             </p>
           </div>
         </div>
-        
+
         <div class="divider my-2"></div>
-        
+
         <div class="space-y-3">
           <div class="flex items-center gap-3 text-sm">
             <.icon name="hero-building-office" class="size-4 text-base-content/40" />
@@ -98,12 +98,12 @@ defmodule ExDeskWeb.UserLive.AccountComponents do
               {Map.get(@user_params, "department") || @current_user.department || "No Department"}
             </span>
           </div>
-          
+
           <div class="flex items-center gap-3 text-sm">
             <.icon name="hero-envelope" class="size-4 text-base-content/40" />
             <span class="text-base-content/70">{@current_user.email}</span>
           </div>
-          
+
           <div class="flex items-center gap-3 text-sm">
             <.icon name="hero-phone" class="size-4 text-base-content/40" />
             <span class="text-base-content/70">
@@ -111,12 +111,12 @@ defmodule ExDeskWeb.UserLive.AccountComponents do
             </span>
           </div>
         </div>
-        
+
         <div class="mt-6 pt-4 border-t border-base-200">
           <div class="flex justify-between items-center text-[10px] uppercase tracking-wider text-base-content/40 font-bold">
             <span>Employee ID</span> <span>Locale</span>
           </div>
-          
+
           <div class="flex justify-between items-center text-sm font-semibold mt-1">
             <span>
               {Map.get(@user_params, "employee_number") || @current_user.employee_number || "---"}

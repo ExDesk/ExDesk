@@ -9,9 +9,9 @@ defmodule ExDeskWeb.TicketLive.Index do
     <Layouts.app flash={@flash} current_scope={@current_scope}>
       <div class="header">
         <h1>Tickets</h1>
-         <.link navigate={~p"/tickets/new"}>New Ticket</.link>
+        <.link navigate={~p"/tickets/new"}>New Ticket</.link>
       </div>
-      
+
       <div class="tickets-list">
         <.table id="tickets" rows={@tickets}>
           <:col :let={ticket} label="Subject">
@@ -19,19 +19,19 @@ defmodule ExDeskWeb.TicketLive.Index do
               {ticket.subject}
             </.link>
           </:col>
-          
+
           <:col :let={ticket} label="Status">
             <span class={["badge", status_badge_class(ticket.status)]}>{ticket.status}</span>
           </:col>
-          
+
           <:col :let={ticket} label="Priority">
             <span class={["badge", priority_badge_class(ticket.priority)]}>{ticket.priority}</span>
           </:col>
-          
+
           <:action :let={ticket}><.link navigate={~p"/tickets/#{ticket}/edit"}>Edit</.link></:action>
         </.table>
       </div>
-      
+
       <.modal
         :if={@live_action in [:new, :edit]}
         id="ticket-modal"

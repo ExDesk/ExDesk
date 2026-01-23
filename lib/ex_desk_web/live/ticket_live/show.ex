@@ -10,10 +10,10 @@ defmodule ExDeskWeb.TicketLive.Show do
       <div class="header">
         <h1>{@ticket.subject}</h1>
       </div>
-      
+
       <div class="ticket-details">
         <p>{@ticket.description}</p>
-        
+
         <p>Status: {@ticket.status}</p>
       </div>
     </Layouts.app>

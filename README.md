@@ -67,6 +67,10 @@ Current ITSM solutions are often resource-heavy, expensive, or lack seamless int
 - **Database:** PostgreSQL
 - **Frontend:** Phoenix LiveView (Server-side rendering with real-time capabilities) & Tailwind CSS
 
+## Technical Documentation
+
+- `docs/TECHNICAL.md`
+
 ---
 
 ## Deployment and Installation
