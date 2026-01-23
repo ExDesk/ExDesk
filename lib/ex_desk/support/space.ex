@@ -16,6 +16,7 @@ defmodule ExDesk.Support.Space do
     field :icon, :string, default: "hero-rectangle-stack"
     field :template, Ecto.Enum, values: @templates
 
+    belongs_to :created_by, ExDesk.Accounts.User
     belongs_to :organization, ExDesk.Organizations.Organization
 
     has_many :tickets, ExDesk.Support.Ticket

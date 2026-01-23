@@ -102,7 +102,14 @@ defmodule ExDesk.Support do
   def fetch_ticket!(id) do
     Ticket
     |> Repo.get!(id)
-    |> Repo.preload([:requester, :assignee, :group, :comments, :activities])
+    |> Repo.preload([
+      :space,
+      :requester,
+      :assignee,
+      :group,
+      comments: [:author],
+      activities: [:actor]
+    ])
   end
 
   @doc """
@@ -616,10 +623,13 @@ defmodule ExDesk.Support do
 
   @doc """
   Creates a space.
+
+  The `created_by_id` is set programmatically (not cast from user input).
   """
-  def create_space(attrs \\ %{}) do
-    %Space{}
+  def create_space(attrs, created_by_id) when is_map(attrs) and is_integer(created_by_id) do
+    %Space{created_by_id: created_by_id}
     |> Space.changeset(attrs)
+    |> Ecto.Changeset.validate_required([:created_by_id])
     |> Repo.insert()
   end
 

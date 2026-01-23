@@ -15,7 +15,10 @@ defmodule ExDeskWeb.TicketLive.Index do
       <div class="tickets-list">
         <.table id="tickets" rows={@tickets}>
           <:col :let={ticket} label="Subject">
-            <.link navigate={~p"/tickets/#{ticket}"} class="font-medium hover:underline">
+            <.link
+              navigate={~p"/tickets/#{ticket}?return_to=/tickets"}
+              class="font-medium hover:underline"
+            >
               {ticket.subject}
             </.link>
           </:col>
@@ -44,8 +47,9 @@ defmodule ExDeskWeb.TicketLive.Index do
           title={@page_title}
           action={@live_action}
           ticket={@ticket}
-          patch={~p"/tickets"}
+          patch={@patch}
           current_scope={@current_scope}
+          spaces={@spaces}
         />
       </.modal>
     </Layouts.app>
@@ -66,22 +70,39 @@ defmodule ExDeskWeb.TicketLive.Index do
   defp apply_action(socket, :new, _params) do
     socket
     |> assign(:page_title, "New Ticket")
+    |> assign(:patch, ~p"/tickets")
     |> assign(:ticket, %Support.Ticket{})
   end
 
   defp apply_action(socket, :index, _params) do
     socket
     |> assign(:page_title, "Listing Tickets")
+    |> assign(:patch, ~p"/tickets")
     |> assign(:ticket, nil)
     |> assign(:tickets, Support.browse_tickets())
   end
 
-  defp apply_action(socket, :edit, %{"id" => id}) do
+  defp apply_action(socket, :edit, %{"id" => id} = params) do
     ticket = Support.fetch_ticket!(id)
+    patch = safe_return_to(Map.get(params, "return_to"))
 
     socket
     |> assign(:page_title, "Edit Ticket")
+    |> assign(:patch, patch)
     |> assign(:ticket, ticket)
+  end
+
+  defp safe_return_to(nil), do: ~p"/tickets"
+
+  defp safe_return_to(val) when is_binary(val) do
+    val = String.trim(val)
+
+    cond do
+      val == "" -> ~p"/tickets"
+      String.starts_with?(val, "//") -> ~p"/tickets"
+      String.starts_with?(val, "/") -> val
+      true -> ~p"/tickets"
+    end
   end
 
   defp status_badge_class(:open), do: "badge-warning"

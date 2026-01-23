@@ -39,7 +39,7 @@ defmodule ExDeskWeb.SpaceLiveTest do
 
       # Kanban preview should show columns
       html = render(live)
-      assert html =~ "To Do" or html =~ "Doing" or html =~ "Done"
+      assert html =~ "To Do" or html =~ "In progress" or html =~ "Done"
 
       # Switch to Project
       html = live |> element("#template-project") |> render_click()
@@ -83,7 +83,10 @@ defmodule ExDeskWeb.SpaceLiveTest do
     end
 
     test "deletes space", %{conn: conn} do
-      space = space_fixture(name: "To Delete", key: "DEL")
+      user = user_fixture()
+      conn = log_in_user(conn, user)
+
+      space = space_fixture(name: "To Delete", key: "DEL", created_by_id: user.id)
       {:ok, index_live, _html} = live(conn, ~p"/spaces")
 
       assert index_live |> element("#space-#{space.id}") |> has_element?()
@@ -140,7 +143,7 @@ defmodule ExDeskWeb.SpaceLiveTest do
   describe "Show" do
     setup %{conn: conn} do
       user = user_fixture()
-      space = space_fixture(name: "My Space", key: "MYSP")
+      space = space_fixture(name: "My Space", key: "MYSP", created_by_id: user.id)
       %{conn: log_in_user(conn, user), space: space}
     end
 
@@ -161,6 +164,26 @@ defmodule ExDeskWeb.SpaceLiveTest do
         |> follow_redirect(conn, ~p"/spaces/#{space.key}/edit")
 
       assert html =~ "Edit Space"
+    end
+  end
+
+  describe "Authorization" do
+    setup %{conn: conn} do
+      owner = user_fixture()
+      other_user = user_fixture()
+      space = space_fixture(name: "Owned Space", key: "OWN", created_by_id: owner.id)
+
+      %{conn: log_in_user(conn, other_user), space: space}
+    end
+
+    test "non-owner cannot access edit", %{conn: conn, space: space} do
+      assert {:error, {:redirect, %{to: _to}}} = live(conn, ~p"/spaces/#{space.key}/edit")
+    end
+
+    test "non-owner does not see edit/delete buttons", %{conn: conn, space: space} do
+      {:ok, view, _html} = live(conn, ~p"/spaces/#{space.key}")
+      refute has_element?(view, "a", "Edit")
+      refute has_element?(view, "button", "Delete")
     end
   end
 
@@ -187,7 +210,12 @@ defmodule ExDeskWeb.SpaceLiveTest do
       assert {:ok, doing_ticket} =
                Support.create_ticket_in_space(
                  space.id,
-                 %{subject: "Doing", requester_id: user.id, status: :pending, priority: :normal},
+                 %{
+                   subject: "In progress",
+                   requester_id: user.id,
+                   status: :pending,
+                   priority: :normal
+                 },
                  user.id
                )
 

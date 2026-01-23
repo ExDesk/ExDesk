@@ -27,6 +27,7 @@ defmodule ExDesk.Support.Policy do
   @behaviour Bodyguard.Policy
 
   alias ExDesk.Accounts.User
+  alias ExDesk.Support.Space
   alias ExDesk.Support.Ticket
 
   @doc """
@@ -60,6 +61,11 @@ defmodule ExDesk.Support.Policy do
   - `:add_comment` - Add a public comment (Admin, Agent, or ticket owner)
   - `:annotate_internally` - Add an internal note (Admin, Agent)
   - `:close_ticket` - Close a solved ticket (Admin only)
+
+  ### Space Actions
+  - `:create_space` - Create a space (All roles)
+  - `:update_space` - Update a space (Admin or creator)
+  - `:delete_space` - Delete a space (Admin or creator)
   """
 
   # Admin: Full access to everything
@@ -90,6 +96,17 @@ defmodule ExDesk.Support.Policy do
       do: true
 
   def authorize(:list_my_tickets, %User{role: :user}, _), do: true
+
+  def authorize(:create_space, %User{role: role}, _) when role in [:admin, :agent, :user],
+    do: true
+
+  def authorize(:update_space, %User{id: user_id}, %Space{created_by_id: created_by_id})
+      when not is_nil(created_by_id) and user_id == created_by_id,
+      do: true
+
+  def authorize(:delete_space, %User{id: user_id}, %Space{created_by_id: created_by_id})
+      when not is_nil(created_by_id) and user_id == created_by_id,
+      do: true
 
   def authorize(_action, _user, _resource), do: false
 end
