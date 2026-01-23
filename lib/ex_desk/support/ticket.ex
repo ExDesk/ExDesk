@@ -32,6 +32,9 @@ defmodule ExDesk.Support.Ticket do
     belongs_to :group, Group
     belongs_to :space, Space
 
+    belongs_to :parent, __MODULE__
+    has_many :children, __MODULE__, foreign_key: :parent_id
+
     has_many :comments, TicketComment
     has_many :activities, TicketActivity
 
@@ -60,6 +63,7 @@ defmodule ExDesk.Support.Ticket do
     |> foreign_key_constraint(:requester_id)
     |> foreign_key_constraint(:assignee_id)
     |> foreign_key_constraint(:group_id)
+    |> foreign_key_constraint(:parent_id)
   end
 
   @doc """
@@ -84,5 +88,39 @@ defmodule ExDesk.Support.Ticket do
     |> validate_required([:subject])
     |> foreign_key_constraint(:assignee_id)
     |> foreign_key_constraint(:group_id)
+    |> foreign_key_constraint(:parent_id)
+  end
+
+  @doc """
+  Programmatically associates this ticket to a parent ticket.
+
+  This is intentionally *not* part of the public create/update casts to avoid
+  accepting `parent_id` from user input.
+  """
+  def set_parent(%Ecto.Changeset{} = changeset, nil) do
+    changeset
+    |> put_change(:parent_id, nil)
+  end
+
+  def set_parent(%Ecto.Changeset{} = changeset, %__MODULE__{id: parent_id}) when is_integer(parent_id) do
+    set_parent(changeset, parent_id)
+  end
+
+  def set_parent(%Ecto.Changeset{} = changeset, parent_id) when is_integer(parent_id) do
+    changeset
+    |> put_change(:parent_id, parent_id)
+    |> validate_not_self_parent()
+    |> foreign_key_constraint(:parent_id)
+  end
+
+  defp validate_not_self_parent(%Ecto.Changeset{} = changeset) do
+    parent_id = get_field(changeset, :parent_id)
+    id = get_field(changeset, :id)
+
+    if is_integer(parent_id) and is_integer(id) and parent_id == id do
+      add_error(changeset, :parent_id, "cannot reference itself")
+    else
+      changeset
+    end
   end
 end
