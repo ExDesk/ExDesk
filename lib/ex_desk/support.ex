@@ -67,6 +67,18 @@ defmodule ExDesk.Support do
     |> Repo.all()
   end
 
+  @doc """
+  Lists tickets for a given space.
+
+  Returns tickets ordered by most recently created first.
+  """
+  def list_tickets_by_space(space_id) do
+    Ticket
+    |> where([t], t.space_id == ^space_id)
+    |> order_by([t], asc_nulls_last: t.rank, desc: t.inserted_at, desc: t.id)
+    |> Repo.all()
+  end
+
   defp filter_by_status(query, nil), do: query
   defp filter_by_status(query, status), do: where(query, [t], t.status == ^status)
 
@@ -107,11 +119,188 @@ defmodule ExDesk.Support do
     end)
   end
 
+  @doc """
+  Creates a ticket inside a specific space.
+
+  The `space_id` is set programmatically (not cast from user input).
+  """
+  def create_ticket_in_space(space_id, attrs \\ %{}, actor_id \\ nil) do
+    Repo.transaction(fn ->
+      with {:ok, ticket} <- do_create_ticket_in_space(space_id, attrs),
+           {:ok, _activity} <- log_activity(ticket.id, actor_id, :created) do
+        ticket
+      else
+        {:error, changeset} -> Repo.rollback(changeset)
+      end
+    end)
+  end
+
+  @doc """
+  Transitions a ticket to a new status using the state machine.
+
+  This is the generic building block used by the Kanban board.
+  """
+  def transition_ticket(%Ticket{} = ticket, new_status, actor_id) when is_atom(new_status) do
+    alias ExDesk.Support.TicketStateMachine
+
+    with {:ok, updated_ticket} <- TicketStateMachine.transition(ticket, new_status),
+         {:ok, _activity} <-
+           log_activity(
+             updated_ticket.id,
+             actor_id,
+             :status_changed,
+             "status",
+             %{value: ticket.status},
+             %{value: updated_ticket.status}
+           ) do
+      {:ok, updated_ticket}
+    else
+      {:error, reason} -> {:error, reason}
+    end
+  end
+
+  @doc """
+  Moves a ticket on a Kanban board.
+
+  - Performs a status transition (when changing columns)
+  - Persists rank ordering for both source and destination columns
+  """
+  def move_ticket_on_kanban_board(
+        space_id,
+        ticket_id,
+        from_column,
+        to_column,
+        from_ordered_ids,
+        to_ordered_ids,
+        actor_id
+      ) do
+    ticket = Repo.get!(Ticket, ticket_id)
+
+    if ticket.space_id != space_id do
+      {:error, :ticket_not_in_space}
+    else
+      new_status = status_for_column(ticket.status, from_column, to_column)
+
+      with {:ok, ticket} <- maybe_transition(ticket, new_status, actor_id),
+           {:ok, _} <-
+             Repo.transaction(fn ->
+               :ok = set_ranks_for_space(space_id, from_ordered_ids)
+               :ok = set_ranks_for_space(space_id, to_ordered_ids)
+               :ok
+             end) do
+        {:ok, ticket}
+      else
+        {:error, reason} -> {:error, reason}
+      end
+    end
+  end
+
+  defp maybe_transition(%Ticket{} = ticket, new_status, _actor_id)
+       when new_status == ticket.status do
+    {:ok, ticket}
+  end
+
+  defp maybe_transition(%Ticket{} = ticket, new_status, actor_id) do
+    transition_ticket(ticket, new_status, actor_id)
+  end
+
   defp do_create_ticket(attrs) do
     %Ticket{}
     |> Ticket.create_changeset(attrs)
     |> Repo.insert()
   end
+
+  defp do_create_ticket_in_space(space_id, attrs) do
+    status = normalize_status(Map.get(attrs, :status) || Map.get(attrs, "status") || :open)
+    column = column_for_status(status)
+    rank = next_rank_for_column(space_id, column)
+
+    %Ticket{space_id: space_id, rank: rank}
+    |> Ticket.create_changeset(attrs)
+    |> Repo.insert()
+  end
+
+  defp set_ranks_for_space(_space_id, nil), do: :ok
+
+  defp set_ranks_for_space(space_id, ordered_ids) when is_list(ordered_ids) do
+    ids = Enum.map(ordered_ids, &normalize_int_id/1)
+
+    tickets_by_id =
+      Ticket
+      |> where([t], t.space_id == ^space_id and t.id in ^ids)
+      |> Repo.all()
+      |> Map.new(fn t -> {t.id, t} end)
+
+    Enum.with_index(ids, 1)
+    |> Enum.each(fn {id, idx} ->
+      case Map.get(tickets_by_id, id) do
+        nil ->
+          :ok
+
+        ticket ->
+          ticket
+          |> Ecto.Changeset.change(rank: idx)
+          |> Repo.update!()
+      end
+    end)
+
+    :ok
+  end
+
+  defp next_rank_for_column(space_id, column) do
+    statuses = statuses_for_column(column)
+
+    Ticket
+    |> where([t], t.space_id == ^space_id and t.status in ^statuses)
+    |> select([t], max(t.rank))
+    |> Repo.one()
+    |> case do
+      nil -> 1
+      max_rank -> max_rank + 1
+    end
+  end
+
+  defp normalize_status(status) when is_atom(status), do: status
+
+  defp normalize_status(status) when is_binary(status) do
+    String.to_existing_atom(status)
+  end
+
+  defp normalize_status(_), do: :open
+
+  defp column_for_status(status) when status in [:open], do: :todo
+  defp column_for_status(status) when status in [:pending, :on_hold], do: :doing
+  defp column_for_status(status) when status in [:solved, :closed], do: :done
+  defp column_for_status(_), do: :todo
+
+  defp statuses_for_column(:todo), do: [:open]
+  defp statuses_for_column(:doing), do: [:pending, :on_hold]
+  defp statuses_for_column(:done), do: [:solved, :closed]
+  defp statuses_for_column(_), do: [:open]
+
+  defp status_for_column(current_status, from_column, to_column) do
+    from_column = normalize_column(from_column)
+    to_column = normalize_column(to_column)
+
+    if from_column == to_column do
+      current_status
+    else
+      case to_column do
+        :todo -> :open
+        :doing -> :pending
+        :done -> :solved
+      end
+    end
+  end
+
+  defp normalize_column(col) when col in [:todo, :doing, :done], do: col
+  defp normalize_column("todo"), do: :todo
+  defp normalize_column("doing"), do: :doing
+  defp normalize_column("done"), do: :done
+  defp normalize_column(_), do: :todo
+
+  defp normalize_int_id(id) when is_integer(id), do: id
+  defp normalize_int_id(id) when is_binary(id), do: String.to_integer(id)
 
   @doc """
   Edits ticket details (subject, description, tags, etc).

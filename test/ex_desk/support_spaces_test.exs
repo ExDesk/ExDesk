@@ -5,6 +5,7 @@ defmodule ExDesk.SupportSpacesTest do
   alias ExDesk.Support.Space
 
   import ExDesk.SupportFixtures
+  import ExDesk.AccountsFixtures
 
   describe "spaces" do
     @valid_attrs %{
@@ -76,6 +77,37 @@ defmodule ExDesk.SupportSpacesTest do
     test "count_tickets_by_space/1 returns 0 for space with no tickets" do
       space = space_fixture()
       assert Support.count_tickets_by_space(space) == 0
+    end
+
+    test "list_tickets_by_space/1 returns only tickets for the given space" do
+      space1 = space_fixture()
+      space2 = space_fixture()
+      user = user_fixture()
+
+      assert {:ok, t1} =
+               Support.create_ticket_in_space(
+                 space1.id,
+                 %{subject: "One", requester_id: user.id},
+                 user.id
+               )
+
+      assert {:ok, t2} =
+               Support.create_ticket_in_space(
+                 space1.id,
+                 %{subject: "Two", requester_id: user.id},
+                 user.id
+               )
+
+      assert {:ok, _t3} =
+               Support.create_ticket_in_space(
+                 space2.id,
+                 %{subject: "Other", requester_id: user.id},
+                 user.id
+               )
+
+      assert [fetched1, fetched2] = Support.list_tickets_by_space(space1.id)
+      assert fetched1.id == t1.id
+      assert fetched2.id == t2.id
     end
   end
 end
