@@ -6,7 +6,7 @@ defmodule ExDeskWeb.DashboardLive do
   @impl true
   def render(assigns) do
     ~H"""
-    <Layouts.app flash={@flash} current_scope={@current_scope}>
+    <Layouts.app flash={@flash} current_scope={@current_scope} spaces={@spaces}>
       <div class="p-8">
         <div class="mx-auto max-w-7xl">
           <div class="mb-8">

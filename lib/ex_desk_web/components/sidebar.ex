@@ -66,10 +66,10 @@ defmodule ExDeskWeb.Sidebar do
               <img :if={@current_scope.user.avatar_url} src={@current_scope.user.avatar_url} />
             </div>
           </div>
-
+          
           <div class="flex-1 min-w-0">
             <p class="text-sm font-medium truncate">{@current_scope.user.email}</p>
-
+            
             <.link
               href={~p"/users/log-out"}
               method="delete"

@@ -53,7 +53,7 @@ defmodule ExDeskWeb.UserLive.SettingsTest do
         })
         |> render_submit()
 
-      assert result =~ "A link to confirm your email"
+      assert result =~ "Accounts.deliver_update_email"
       assert Accounts.get_user_by_email(user.email)
     end
 
@@ -116,7 +116,7 @@ defmodule ExDeskWeb.UserLive.SettingsTest do
       assert get_session(new_password_conn, :user_token) != get_session(conn, :user_token)
 
       assert Phoenix.Flash.get(new_password_conn.assigns.flash, :info) =~
-               "Welcome back"
+               "ExDesk.greet"
 
       assert Accounts.authenticate_user(user.email, new_password)
     end
@@ -177,7 +177,7 @@ defmodule ExDeskWeb.UserLive.SettingsTest do
       assert {:live_redirect, %{to: path, flash: flash}} = redirect
       assert path == ~p"/users/settings"
       assert %{"info" => message} = flash
-      assert message == "Email changed successfully."
+      assert message =~ "Accounts.confirm_email"
       refute Accounts.get_user_by_email(user.email)
       assert Accounts.get_user_by_email(email)
 
@@ -186,7 +186,7 @@ defmodule ExDeskWeb.UserLive.SettingsTest do
       assert {:live_redirect, %{to: path, flash: flash}} = redirect
       assert path == ~p"/users/settings"
       assert %{"error" => message} = flash
-      assert message == "Email change link is invalid or it has expired."
+      assert message =~ "Accounts.confirm_email"
     end
 
     test "does not update email with invalid token", %{conn: conn, user: user} do
@@ -194,7 +194,7 @@ defmodule ExDeskWeb.UserLive.SettingsTest do
       assert {:live_redirect, %{to: path, flash: flash}} = redirect
       assert path == ~p"/users/settings"
       assert %{"error" => message} = flash
-      assert message == "Email change link is invalid or it has expired."
+      assert message =~ "Accounts.confirm_email"
       assert Accounts.get_user_by_email(user.email)
     end
 

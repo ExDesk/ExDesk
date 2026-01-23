@@ -5,6 +5,8 @@ defmodule ExDeskWeb.SpaceLiveTest do
   import ExDesk.AccountsFixtures
   import ExDesk.SupportFixtures
 
+  alias ExDesk.Support
+
   describe "TemplateSelection with Live Preview" do
     setup %{conn: conn} do
       user = user_fixture()
@@ -103,16 +105,22 @@ defmodule ExDeskWeb.SpaceLiveTest do
     test "creates space with valid data", %{conn: conn} do
       {:ok, form_live, _html} = live(conn, ~p"/spaces/new/service_desk")
 
+      # Trigger name change to generate suggestions
+      form_live
+      |> form("#space-form", %{"space" => %{"name" => "IT Helpdesk"}})
+      |> render_change()
+
+      # Now select the key from the select field.
+      # "IT Helpdesk" should generate "IH" as a suggestion.
       form_live
       |> form("#space-form", %{
         "space" => %{
-          "name" => "IT Helpdesk",
-          "key" => "ITH"
+          "key" => "IH"
         }
       })
       |> render_submit()
 
-      assert_redirect(form_live, ~p"/spaces/ITH")
+      assert_redirect(form_live, ~p"/spaces/IH")
     end
 
     test "shows validation errors", %{conn: conn} do
@@ -153,6 +161,117 @@ defmodule ExDeskWeb.SpaceLiveTest do
         |> follow_redirect(conn, ~p"/spaces/#{space.key}/edit")
 
       assert html =~ "Edit Space"
+    end
+  end
+
+  describe "Show (kanban)" do
+    setup %{conn: conn} do
+      user = user_fixture()
+      space = space_fixture(template: :kanban)
+
+      %{conn: log_in_user(conn, user), user: user, space: space}
+    end
+
+    test "renders kanban columns and distributes tickets by status", %{
+      conn: conn,
+      user: user,
+      space: space
+    } do
+      assert {:ok, todo_ticket} =
+               Support.create_ticket_in_space(
+                 space.id,
+                 %{subject: "Todo", requester_id: user.id, status: :open, priority: :high},
+                 user.id
+               )
+
+      assert {:ok, doing_ticket} =
+               Support.create_ticket_in_space(
+                 space.id,
+                 %{subject: "Doing", requester_id: user.id, status: :pending, priority: :normal},
+                 user.id
+               )
+
+      assert {:ok, done_ticket} =
+               Support.create_ticket_in_space(
+                 space.id,
+                 %{subject: "Done", requester_id: user.id, status: :solved, priority: :low},
+                 user.id
+               )
+
+      {:ok, view, _html} = live(conn, ~p"/spaces/#{space.key}")
+
+      assert has_element?(view, "#kanban-board")
+      assert has_element?(view, "#kanban-col-todo")
+      assert has_element?(view, "#kanban-col-doing")
+      assert has_element?(view, "#kanban-col-done")
+
+      assert has_element?(view, "#kanban-col-todo #kanban-ticket-#{todo_ticket.id}")
+      assert has_element?(view, "#kanban-col-doing #kanban-ticket-#{doing_ticket.id}")
+      assert has_element?(view, "#kanban-col-done #kanban-ticket-#{done_ticket.id}")
+    end
+
+    test "creates a new ticket in the space", %{conn: conn, user: _user, space: space} do
+      {:ok, view, _html} = live(conn, ~p"/spaces/#{space.key}")
+
+      view |> element("#space-new-ticket") |> render_click()
+
+      assert has_element?(view, "#space-ticket-form")
+
+      view
+      |> form("#space-ticket-form", %{
+        "ticket" => %{
+          "subject" => "From Space",
+          "description" => "Created from kanban",
+          "priority" => "high"
+        }
+      })
+      |> render_submit()
+
+      ticket =
+        space.id
+        |> Support.list_tickets_by_space()
+        |> Enum.find(fn t -> t.subject == "From Space" end)
+
+      assert ticket
+      assert has_element?(view, "#kanban-col-todo #kanban-ticket-#{ticket.id}")
+    end
+  end
+
+  describe "Show (kanban) assignee" do
+    setup %{conn: conn} do
+      agent = user_fixture(%{role: :agent})
+      assignee = user_fixture(%{role: :agent})
+      space = space_fixture(template: :kanban)
+
+      %{conn: log_in_user(conn, agent), agent: agent, assignee: assignee, space: space}
+    end
+
+    test "agent can assign a new ticket in the space", %{
+      conn: conn,
+      assignee: assignee,
+      space: space
+    } do
+      {:ok, view, _html} = live(conn, ~p"/spaces/#{space.key}")
+
+      view |> element("#space-new-ticket") |> render_click()
+
+      assert has_element?(view, "#space-ticket-form")
+      assert has_element?(view, "#ticket_assignee_id")
+
+      view
+      |> form("#space-ticket-form", %{
+        "ticket" => %{
+          "subject" => "Assigned from Space",
+          "description" => "Created from kanban",
+          "priority" => "high",
+          "assignee_id" => "#{assignee.id}"
+        }
+      })
+      |> render_submit()
+
+      ticket = ExDesk.Repo.get_by!(Support.Ticket, subject: "Assigned from Space")
+      assert ticket.space_id == space.id
+      assert ticket.assignee_id == assignee.id
     end
   end
 end

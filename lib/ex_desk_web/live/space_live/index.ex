@@ -29,10 +29,10 @@ defmodule ExDeskWeb.SpaceLive.Index do
         <div class="flex items-center justify-between">
           <div>
             <h1 class="text-2xl font-bold">Spaces</h1>
-            
+
             <p class="text-base-content/60">Organize your work into dedicated spaces</p>
           </div>
-          
+
           <.link
             navigate={~p"/spaces/new"}
             class="btn btn-primary"
@@ -40,17 +40,17 @@ defmodule ExDeskWeb.SpaceLive.Index do
             <.icon name="hero-plus" class="size-5" /> New Space
           </.link>
         </div>
-        
+
         <%= if @spaces == [] do %>
           <div class="card bg-base-200 p-12 text-center">
             <div class="mx-auto max-w-sm">
               <.icon name="hero-rectangle-stack" class="size-16 mx-auto text-base-content/30 mb-4" />
               <h3 class="text-lg font-semibold mb-2">No spaces yet</h3>
-              
+
               <p class="text-base-content/60 mb-6">
                 Create your first space to start organizing your work
               </p>
-              
+
               <.link navigate={~p"/spaces/new"} class="btn btn-primary">
                 Create your first space
               </.link>
@@ -76,11 +76,11 @@ defmodule ExDeskWeb.SpaceLive.Index do
                     <p class="text-sm text-base-content/60">{space.key}</p>
                   </div>
                 </div>
-                
+
                 <p :if={space.description} class="text-sm text-base-content/70 mt-2 line-clamp-2">
                   {space.description}
                 </p>
-                
+
                 <div class="card-actions justify-end mt-4">
                   <.link navigate={~p"/spaces/#{space.key}/edit"} class="btn btn-ghost btn-sm">
                     Edit

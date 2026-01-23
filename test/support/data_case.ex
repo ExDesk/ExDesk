@@ -37,6 +37,13 @@ defmodule ExDesk.DataCase do
   """
   def setup_sandbox(tags) do
     pid = Ecto.Adapters.SQL.Sandbox.start_owner!(ExDesk.Repo, shared: not tags[:async])
+
+    # Machinery runs transitions in its own GenServer, which must be allowed
+    # to use the sandbox connection in async tests.
+    if transitions_pid = Process.whereis(Machinery.Transitions) do
+      Ecto.Adapters.SQL.Sandbox.allow(ExDesk.Repo, pid, transitions_pid)
+    end
+
     on_exit(fn -> Ecto.Adapters.SQL.Sandbox.stop_owner(pid) end)
   end
 

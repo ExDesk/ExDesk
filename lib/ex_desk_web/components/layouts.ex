@@ -48,13 +48,13 @@ defmodule ExDeskWeb.Layouts do
         </header>
 
         <main class="flex-1 overflow-y-auto bg-base-100 p-4 lg:p-8">
-          <div class="mx-auto max-w-7xl animate-pipeline-appear">{render_slot(@inner_block)}</div>
+          <div class="mx-auto max-w-7xl">{render_slot(@inner_block)}</div>
         </main>
       </div>
 
       <div class="drawer-side z-40">
         <label for="app-drawer" aria-label="close sidebar" class="drawer-overlay"></label>
-        <.sidebar current_scope={@current_scope} />
+        <.sidebar current_scope={@current_scope} spaces={@spaces} />
       </div>
     </div>
     <.flash_group flash={@flash} />
