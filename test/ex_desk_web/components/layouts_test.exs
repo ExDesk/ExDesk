@@ -2,7 +2,6 @@ defmodule ExDeskWeb.Components.LayoutsTest do
   use ExDeskWeb.ConnCase, async: true
   import Phoenix.LiveViewTest
   import Phoenix.Component
-  alias ExDeskWeb.Layouts
   import ExDeskWeb.Sidebar
 
   test "sidebar/1 renders avatar when user has avatar_url" do

@@ -1,6 +1,9 @@
 defmodule ExDeskWeb.TicketLive.FormComponent do
   use ExDeskWeb, :live_component
 
+  import ExDeskWeb.Authorization, only: [can?: 3]
+
+  alias ExDesk.Accounts
   alias ExDesk.Support
 
   @impl true
@@ -8,7 +11,7 @@ defmodule ExDeskWeb.TicketLive.FormComponent do
     ~H"""
     <div>
       <.header>{@title}</.header>
-      
+
       <.simple_form
         for={@form}
         id="ticket-form"
@@ -18,6 +21,16 @@ defmodule ExDeskWeb.TicketLive.FormComponent do
       >
         <.input field={@form[:subject]} type="text" label="Subject" />
         <.input field={@form[:description]} type="textarea" label="Description" />
+
+        <.input
+          :if={@show_assignee?}
+          field={@form[:assignee_id]}
+          type="select"
+          label="Assignee"
+          prompt="Unassigned"
+          options={@assignee_options}
+        />
+
         <.input
           field={@form[:priority]}
           type="select"
@@ -32,19 +45,33 @@ defmodule ExDeskWeb.TicketLive.FormComponent do
 
   @impl true
   def update(%{ticket: ticket} = assigns, socket) do
-    changeset = Support.Ticket.create_changeset(ticket, %{})
+    show_assignee? = can?(assigns.current_scope.user, :assign_ticket, ticket)
+
+    assignee_options =
+      if show_assignee? do
+        Accounts.list_agents()
+        |> Enum.map(fn u -> {u.email, u.id} end)
+      else
+        []
+      end
+
+    changeset = changeset_for_action(assigns.action, ticket, %{})
 
     {:ok,
      socket
      |> assign(assigns)
+     |> assign(:show_assignee?, show_assignee?)
+     |> assign(:assignee_options, assignee_options)
      |> assign_form(changeset)}
   end
 
   @impl true
   def handle_event("validate", %{"ticket" => ticket_params}, socket) do
+    ticket_params = sanitize_ticket_params(socket, ticket_params)
+
     changeset =
-      socket.assigns.ticket
-      |> Support.Ticket.create_changeset(ticket_params)
+      socket.assigns.action
+      |> changeset_for_action(socket.assigns.ticket, ticket_params)
       |> Map.put(:action, :validate)
 
     {:noreply, assign_form(socket, changeset)}
@@ -55,8 +82,7 @@ defmodule ExDeskWeb.TicketLive.FormComponent do
   end
 
   defp save_ticket(socket, :new, ticket_params) do
-    # Ensure current user is requester
-    params = Map.put(ticket_params, "requester_id", socket.assigns.current_scope.user.id)
+    params = sanitize_ticket_params(socket, ticket_params)
 
     case Support.create_ticket(params) do
       {:ok, _ticket} ->
@@ -71,6 +97,8 @@ defmodule ExDeskWeb.TicketLive.FormComponent do
   end
 
   defp save_ticket(socket, :edit, ticket_params) do
+    ticket_params = sanitize_ticket_params(socket, ticket_params)
+
     case Support.edit_ticket_details(socket.assigns.ticket, ticket_params) do
       {:ok, _ticket} ->
         {:noreply,
@@ -85,5 +113,25 @@ defmodule ExDeskWeb.TicketLive.FormComponent do
 
   defp assign_form(socket, %Ecto.Changeset{} = changeset) do
     assign(socket, :form, to_form(changeset))
+  end
+
+  defp changeset_for_action(:edit, ticket, attrs),
+    do: Support.Ticket.update_changeset(ticket, attrs)
+
+  defp changeset_for_action(_action, ticket, attrs),
+    do: Support.Ticket.create_changeset(ticket, attrs)
+
+  defp sanitize_ticket_params(socket, ticket_params) when is_map(ticket_params) do
+    ticket_params =
+      case socket.assigns.action do
+        :new -> Map.put(ticket_params, "requester_id", socket.assigns.current_scope.user.id)
+        _ -> Map.drop(ticket_params, ["requester_id"])
+      end
+
+    if can?(socket.assigns.current_scope.user, :assign_ticket, socket.assigns.ticket) do
+      ticket_params
+    else
+      Map.drop(ticket_params, ["assignee_id"])
+    end
   end
 end

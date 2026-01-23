@@ -6,14 +6,14 @@ defmodule ExDeskWeb.TicketLive.Show do
   @impl true
   def render(assigns) do
     ~H"""
-    <Layouts.app flash={@flash} current_scope={@current_scope}>
+    <Layouts.app flash={@flash} current_scope={@current_scope} spaces={@spaces}>
       <div class="header">
         <h1>{@ticket.subject}</h1>
       </div>
-      
+
       <div class="ticket-details">
         <p>{@ticket.description}</p>
-        
+
         <p>Status: {@ticket.status}</p>
       </div>
     </Layouts.app>

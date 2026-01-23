@@ -9,7 +9,7 @@ defmodule ExDeskWeb.UserLive.Settings do
   @impl true
   def render(assigns) do
     ~H"""
-    <Layouts.app flash={@flash} current_scope={@current_scope}>
+    <Layouts.app flash={@flash} current_scope={@current_scope} spaces={@spaces}>
       <div class="p-8 max-w-4xl mx-auto space-y-8">
         <div>
           <.header>

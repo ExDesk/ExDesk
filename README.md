@@ -67,6 +67,10 @@ Current ITSM solutions are often resource-heavy, expensive, or lack seamless int
 - **Database:** PostgreSQL
 - **Frontend:** Phoenix LiveView (Server-side rendering with real-time capabilities) & Tailwind CSS
 
+## Technical Documentation
+
+- `docs/TECHNICAL.md`
+
 ---
 
 ## Deployment and Installation
@@ -138,7 +142,7 @@ The provided Docker configuration manages the required infrastructure services (
 
 ## License
 
-Distributed under the MIT License. See `LICENSE` for more information.
+Distributed under the Apache-2.0 license. See `LICENSE` for more information.
 
 ---
 

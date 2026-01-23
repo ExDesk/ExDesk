@@ -11,10 +11,10 @@ defmodule ExDeskWeb.UserLive.Confirmation do
     <div class="mx-auto max-w-sm">
       <div class="text-center mb-8">
         <.header>Logging you in...</.header>
-        
+
         <p class="mt-4 text-sm text-zinc-500">Please wait while we verify your magic link.</p>
       </div>
-      
+
       <.form for={@form} action={~p"/users/log-in"} phx-trigger-action={@trigger_submit}>
         <.input field={@form[:token]} type="hidden" value={@form[:token].value} />
       </.form>

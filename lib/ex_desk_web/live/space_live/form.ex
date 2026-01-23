@@ -15,13 +15,14 @@ defmodule ExDeskWeb.SpaceLive.Form do
     {action, space, template} = resolve_action(params)
 
     changeset = Support.change_space(space)
+    suggestions = generate_key_suggestions(space.name || "")
 
     {:ok,
      socket
      |> assign(:action, action)
      |> assign(:space, space)
      |> assign(:template, template)
-     |> assign(:key_suggestions, [])
+     |> assign(:key_suggestions, suggestions)
      |> assign(
        :template_info,
        Map.get(@template_info, template, %{name: "Custom", color: "#6B7280"})
@@ -36,7 +37,14 @@ defmodule ExDeskWeb.SpaceLive.Form do
   end
 
   defp resolve_action(%{"template" => template}) do
-    {:new, %Space{template: String.to_existing_atom(template)}, template}
+    template_atom =
+      Map.get(
+        %{"kanban" => :kanban, "service_desk" => :service_desk, "project" => :project},
+        template,
+        :kanban
+      )
+
+    {:new, %Space{template: template_atom}, template}
   end
 
   defp page_title(:new), do: "New Space"
@@ -49,8 +57,14 @@ defmodule ExDeskWeb.SpaceLive.Form do
       |> Support.change_space(space_params)
       |> Map.put(:action, :validate)
 
-    # Gera sugestões de key baseadas no nome
     suggestions = generate_key_suggestions(space_params["name"] || "")
+
+    current_key = space_params["key"]
+
+    suggestions =
+      if current_key && current_key != "" && current_key not in suggestions,
+        do: [current_key | suggestions],
+        else: suggestions
 
     {:noreply,
      socket
@@ -94,7 +108,7 @@ defmodule ExDeskWeb.SpaceLive.Form do
   @impl true
   def render(assigns) do
     ~H"""
-    <Layouts.app flash={@flash} current_scope={@current_scope}>
+    <Layouts.app flash={@flash} current_scope={@current_scope} spaces={@spaces}>
       <div class="max-w-2xl mx-auto">
         <div class="mb-8">
           <.link
@@ -144,13 +158,17 @@ defmodule ExDeskWeb.SpaceLive.Form do
                     class="select select-bordered w-full uppercase"
                     required
                   >
-                    <option value="" disabled selected={@form[:key].value in [nil, ""]}>
-                      Select a key or type your own
+                    <option
+                      value=""
+                      disabled
+                      selected={is_nil(@form[:key].value) || @form[:key].value == ""}
+                    >
+                      Select a key
                     </option>
                     <option
                       :for={suggestion <- @key_suggestions}
                       value={suggestion}
-                      selected={@form[:key].value == suggestion}
+                      selected={to_string(@form[:key].value) == suggestion}
                     >
                       {suggestion}
                     </option>
@@ -217,11 +235,14 @@ defmodule ExDeskWeb.SpaceLive.Form do
       |> Enum.map(&String.upcase/1)
       |> Enum.filter(&(String.length(&1) >= 2 and String.length(&1) <= 10))
       |> Enum.filter(&String.match?(&1, ~r/^[A-Z]+$/))
+
+    suggestions =
+      suggestions
       |> Enum.uniq()
       |> Enum.take(3)
 
-    suggestions
+    if suggestions == [], do: ["SD", "PROJ", "KB"], else: suggestions
   end
 
-  defp generate_key_suggestions(_), do: []
+  defp generate_key_suggestions(_), do: ["SD", "PROJ", "KB"]
 end

@@ -11,6 +11,18 @@ defmodule ExDesk.Accounts do
   ## Database getters
 
   @doc """
+  Lists users that can be assigned to tickets.
+
+  Returns active agents/admins ordered by email.
+  """
+  def list_agents do
+    User
+    |> where([u], u.role in [:agent, :admin] and u.is_active == true)
+    |> order_by([u], asc: u.email)
+    |> Repo.all()
+  end
+
+  @doc """
   Gets a user by email.
 
   ## Examples
@@ -119,17 +131,20 @@ defmodule ExDesk.Accounts do
   def confirm_email_change(user, token) do
     context = "change:#{user.email}"
 
-    Repo.transact(fn ->
-      with {:ok, query} <- UserToken.verify_change_email_token_query(token, context),
-           %UserToken{sent_to: email} <- Repo.one(query),
-           {:ok, user} <- Repo.update(User.email_changeset(user, %{email: email})),
-           {_count, _result} <-
-             Repo.delete_all(from(UserToken, where: [user_id: ^user.id, context: ^context])) do
-        {:ok, user}
-      else
-        _ -> {:error, :transaction_aborted}
-      end
-    end)
+    case Repo.transaction(fn ->
+           with {:ok, query} <- UserToken.verify_change_email_token_query(token, context),
+                %UserToken{sent_to: email} <- Repo.one(query),
+                {:ok, user} <- Repo.update(User.email_changeset(user, %{email: email})),
+                {_count, _result} <-
+                  Repo.delete_all(from(UserToken, where: [user_id: ^user.id, context: ^context])) do
+             {:ok, user}
+           else
+             _ -> {:error, :transaction_aborted}
+           end
+         end) do
+      {:ok, result} -> result
+      {:error, _} = error -> error
+    end
   end
 
   @doc """
@@ -316,15 +331,20 @@ defmodule ExDesk.Accounts do
   ## Token helper
 
   defp update_user_and_delete_all_tokens(changeset) do
-    Repo.transact(fn ->
-      with {:ok, user} <- Repo.update(changeset) do
-        tokens_to_expire = Repo.all_by(UserToken, user_id: user.id)
+    case Repo.transaction(fn ->
+           with {:ok, user} <- Repo.update(changeset) do
+             tokens_to_expire = Repo.all_by(UserToken, user_id: user.id)
 
-        Repo.delete_all(from(t in UserToken, where: t.id in ^Enum.map(tokens_to_expire, & &1.id)))
+             Repo.delete_all(
+               from(t in UserToken, where: t.id in ^Enum.map(tokens_to_expire, & &1.id))
+             )
 
-        {:ok, {user, tokens_to_expire}}
-      end
-    end)
+             {:ok, {user, tokens_to_expire}}
+           end
+         end) do
+      {:ok, result} -> result
+      {:error, _} = error -> error
+    end
   end
 
   ## Statistics
