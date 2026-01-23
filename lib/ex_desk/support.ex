@@ -9,6 +9,8 @@ defmodule ExDesk.Support do
 
   alias ExDesk.Support.{Group, Space, Ticket, TicketActivity, TicketComment}
 
+  @subtask_depth_limit 3
+
   defdelegate authorize(action, user, params), to: ExDesk.Support.Policy
 
   @doc """
@@ -143,6 +145,51 @@ defmodule ExDesk.Support do
   end
 
   @doc """
+  Creates a sub-task (child ticket) for a parent ticket.
+
+  The sub-task inherits `space_id` and `requester_id` from the parent.
+  """
+  def create_subtask(%Ticket{} = parent_ticket, attrs \\ %{}, actor_id \\ nil) when is_map(attrs) do
+    Repo.transaction(fn ->
+      changeset = build_subtask_changeset(parent_ticket, attrs)
+
+      case ticket_depth(parent_ticket) do
+        {:error, :circular_reference} ->
+          Repo.rollback(
+            Ecto.Changeset.add_error(changeset, :parent_id, "circular parent reference detected")
+          )
+
+        {:ok, depth} when depth + 1 > @subtask_depth_limit ->
+          Repo.rollback(
+            Ecto.Changeset.add_error(
+              changeset,
+              :parent_id,
+              "exceeds maximum depth of #{@subtask_depth_limit}"
+            )
+          )
+
+        {:ok, _depth} ->
+          with {:ok, ticket} <- Repo.insert(changeset),
+               {:ok, _activity} <- log_activity(ticket.id, actor_id, :created) do
+            ticket
+          else
+            {:error, %Ecto.Changeset{} = cs} -> Repo.rollback(cs)
+          end
+      end
+    end)
+  end
+
+  @doc """
+  Lists all direct sub-tasks (children) for a ticket.
+  """
+  def list_subtasks(ticket_id) when is_integer(ticket_id) do
+    Ticket
+    |> where([t], t.parent_id == ^ticket_id)
+    |> order_by([t], asc: t.inserted_at, asc: t.id)
+    |> Repo.all()
+  end
+
+  @doc """
   Transitions a ticket to a new status using the state machine.
 
   This is the generic building block used by the Kanban board.
@@ -225,6 +272,45 @@ defmodule ExDesk.Support do
     %Ticket{space_id: space_id, rank: rank}
     |> Ticket.create_changeset(attrs)
     |> Repo.insert()
+  end
+
+  defp build_subtask_changeset(%Ticket{} = parent_ticket, attrs) do
+    status = normalize_status(Map.get(attrs, :status) || Map.get(attrs, "status") || :open)
+
+    ticket =
+      case parent_ticket.space_id do
+        nil ->
+          %Ticket{requester_id: parent_ticket.requester_id}
+
+        space_id ->
+          column = column_for_status(status)
+          rank = next_rank_for_column(space_id, column)
+          %Ticket{requester_id: parent_ticket.requester_id, space_id: space_id, rank: rank}
+      end
+
+    ticket
+    |> Ticket.create_changeset(attrs)
+    |> Ticket.set_parent(parent_ticket)
+  end
+
+  defp ticket_depth(%Ticket{id: id} = ticket) when is_integer(id) do
+    do_ticket_depth(ticket.parent_id, MapSet.new([id]), 0)
+  end
+
+  defp do_ticket_depth(nil, _seen, depth), do: {:ok, depth}
+
+  defp do_ticket_depth(parent_id, seen, depth) when is_integer(parent_id) do
+    if MapSet.member?(seen, parent_id) do
+      {:error, :circular_reference}
+    else
+      case Repo.get(Ticket, parent_id) do
+        nil ->
+          {:ok, depth + 1}
+
+        parent_ticket ->
+          do_ticket_depth(parent_ticket.parent_id, MapSet.put(seen, parent_id), depth + 1)
+      end
+    end
   end
 
   defp set_ranks_for_space(_space_id, nil), do: :ok
