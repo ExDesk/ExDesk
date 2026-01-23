@@ -12,10 +12,12 @@ defmodule ExDeskWeb.SpaceLive.Show do
      socket
      |> assign(:page_title, space.name)
      |> assign(:space, space)
-     |> assign(:ticket_count, ticket_count)}
+     |> assign(:ticket_count, ticket_count)}    
   end
 
   @impl true
+  @spec handle_event(<<_::48>>, any(), Phoenix.LiveView.Socket.t()) ::
+          {:noreply, Phoenix.LiveView.Socket.t()}
   def handle_event("delete", _params, socket) do
     space = socket.assigns.space
     {:ok, _} = Support.delete_space(space)
@@ -40,14 +42,14 @@ defmodule ExDeskWeb.SpaceLive.Show do
             >
               <.icon name="hero-rectangle-stack" class="size-8 text-white" />
             </div>
-            
+
             <div>
               <h1 class="text-3xl font-bold">{@space.name}</h1>
-              
+
               <p class="text-base-content/60">{@space.key} · {template_label(@space.template)}</p>
             </div>
           </div>
-          
+
           <div class="flex gap-2">
             <.link navigate={~p"/spaces/#{@space.key}/edit"} class="btn btn-ghost">
               <.icon name="hero-pencil" class="size-4" /> Edit
@@ -65,7 +67,7 @@ defmodule ExDeskWeb.SpaceLive.Show do
         <div :if={@space.description} class="card bg-base-200">
           <div class="card-body">
             <h3 class="font-semibold mb-2">Description</h3>
-            
+
             <p class="text-base-content/70">{@space.description}</p>
           </div>
         </div>
@@ -74,23 +76,23 @@ defmodule ExDeskWeb.SpaceLive.Show do
           <div class="card bg-base-200">
             <div class="card-body">
               <div class="text-sm text-base-content/60">Tickets</div>
-              
+
               <div class="text-2xl font-bold">{@ticket_count}</div>
             </div>
           </div>
-          
+
           <div class="card bg-base-200">
             <div class="card-body">
               <div class="text-sm text-base-content/60">Template</div>
-              
+
               <div class="text-2xl font-bold">{template_label(@space.template)}</div>
             </div>
           </div>
-          
+
           <div class="card bg-base-200">
             <div class="card-body">
               <div class="text-sm text-base-content/60">Created</div>
-              
+
               <div class="text-2xl font-bold">{Calendar.strftime(@space.inserted_at, "%b %d")}</div>
             </div>
           </div>

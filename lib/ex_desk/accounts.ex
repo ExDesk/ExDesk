@@ -119,7 +119,7 @@ defmodule ExDesk.Accounts do
   def confirm_email_change(user, token) do
     context = "change:#{user.email}"
 
-    Repo.transact(fn ->
+    case Repo.transaction(fn ->
       with {:ok, query} <- UserToken.verify_change_email_token_query(token, context),
            %UserToken{sent_to: email} <- Repo.one(query),
            {:ok, user} <- Repo.update(User.email_changeset(user, %{email: email})),
@@ -129,7 +129,10 @@ defmodule ExDesk.Accounts do
       else
         _ -> {:error, :transaction_aborted}
       end
-    end)
+    end) do
+      {:ok, result} -> result
+      {:error, _} = error -> error
+    end
   end
 
   @doc """
@@ -316,7 +319,7 @@ defmodule ExDesk.Accounts do
   ## Token helper
 
   defp update_user_and_delete_all_tokens(changeset) do
-    Repo.transact(fn ->
+    case Repo.transaction(fn ->
       with {:ok, user} <- Repo.update(changeset) do
         tokens_to_expire = Repo.all_by(UserToken, user_id: user.id)
 
@@ -324,7 +327,10 @@ defmodule ExDesk.Accounts do
 
         {:ok, {user, tokens_to_expire}}
       end
-    end)
+    end) do
+      {:ok, result} -> result
+      {:error, _} = error -> error
+    end
   end
 
   ## Statistics
