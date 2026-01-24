@@ -14,8 +14,7 @@ defmodule ExDeskWeb.TicketLive.Show do
               <.link navigate={back_href(@return_to, @ticket)} class="btn btn-ghost btn-sm">
                 <.icon name="hero-arrow-left" class="size-4" /> {back_label(@return_to, @ticket)}
               </.link>
-
-              <span class="badge badge-ghost badge-sm font-mono">#{@ticket.id}</span>
+               <span class="badge badge-ghost badge-sm font-mono">#{@ticket.id}</span>
             </div>
 
             <h1 class="text-2xl md:text-3xl font-bold leading-tight truncate">{@ticket.subject}</h1>
@@ -27,19 +26,17 @@ defmodule ExDeskWeb.TicketLive.Show do
               ]}>
                 {humanize_enum(@ticket.status)}
               </span>
-
               <span class={[
                 "badge badge-sm",
                 priority_badge_class(@ticket.priority)
               ]}>
                 {humanize_enum(@ticket.priority)}
               </span>
-
               <span class="badge badge-ghost badge-sm">
-                <.icon name="hero-chat-bubble-left-right" class="size-3" />
-                {humanize_enum(@ticket.channel)}
+                <.icon name="hero-chat-bubble-left-right" class="size-3" /> {humanize_enum(
+                  @ticket.channel
+                )}
               </span>
-
               <span :if={@ticket.due_at} class="badge badge-ghost badge-sm">
                 <.icon name="hero-clock" class="size-3" /> Due {format_dt(@ticket.due_at)}
               </span>
@@ -73,6 +70,7 @@ defmodule ExDeskWeb.TicketLive.Show do
             <section class="bg-base-100 rounded-box border border-base-300 p-5">
               <div class="flex items-center justify-between gap-4 mb-3">
                 <h2 class="text-sm font-semibold text-base-content/70">Conversation</h2>
+
                 <span class="text-xs text-base-content/50">
                   {length(@ticket.comments)} comment(s)
                 </span>
@@ -93,14 +91,10 @@ defmodule ExDeskWeb.TicketLive.Show do
 
                   <div class="min-w-0 flex-1">
                     <div class="flex flex-wrap items-center gap-x-2 gap-y-1">
-                      <span class="font-semibold truncate">
-                        {user_label(comment.author)}
-                      </span>
-
+                      <span class="font-semibold truncate">{user_label(comment.author)}</span>
                       <span class="text-xs text-base-content/50">
                         {format_dt(comment.inserted_at)}
                       </span>
-
                       <span class={[
                         "badge badge-xs",
                         if(comment.is_public, do: "badge-ghost", else: "badge-neutral")
@@ -109,9 +103,7 @@ defmodule ExDeskWeb.TicketLive.Show do
                       </span>
                     </div>
 
-                    <div class="mt-2 whitespace-pre-wrap leading-relaxed">
-                      {comment.body}
-                    </div>
+                    <div class="mt-2 whitespace-pre-wrap leading-relaxed">{comment.body}</div>
                   </div>
                 </div>
               </div>
@@ -124,10 +116,15 @@ defmodule ExDeskWeb.TicketLive.Show do
 
               <.list>
                 <:item title="Requester">{user_label(@ticket.requester)}</:item>
+
                 <:item title="Assignee">{user_label(@ticket.assignee)}</:item>
+
                 <:item title="Group">{group_label(@ticket.group)}</:item>
+
                 <:item title="Created">{format_dt(@ticket.inserted_at)}</:item>
+
                 <:item title="Updated">{format_dt(@ticket.updated_at)}</:item>
+
                 <:item :if={@ticket.tags != []} title="Tags">
                   <div class="flex flex-wrap gap-1.5">
                     <span :for={tag <- @ticket.tags} class="badge badge-ghost badge-sm">{tag}</span>
@@ -151,6 +148,7 @@ defmodule ExDeskWeb.TicketLive.Show do
                   <span class="font-semibold">{user_label(activity.actor)}</span>
                   <span class="text-base-content/60">{activity_text(activity)}</span>
                 </div>
+
                 <div class="text-xs text-base-content/50 mt-1">{format_dt(activity.inserted_at)}</div>
               </div>
             </section>

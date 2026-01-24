@@ -109,7 +109,7 @@ defmodule ExDeskWeb.TicketLive.FormComponent do
           {:noreply,
            socket
            |> put_flash(:info, "Ticket created successfully")
-           |> push_patch(to: socket.assigns.patch)}
+           |> return_to()}
 
         {:error, %Ecto.Changeset{} = changeset} ->
           {:noreply, assign_form(socket, validate_changeset(changeset))}
@@ -127,7 +127,7 @@ defmodule ExDeskWeb.TicketLive.FormComponent do
         {:noreply,
          socket
          |> put_flash(:info, "Ticket updated successfully")
-         |> push_patch(to: socket.assigns.patch)}
+         |> return_to()}
 
       {:error, %Ecto.Changeset{} = changeset} ->
         {:noreply, assign_form(socket, changeset)}
@@ -136,6 +136,21 @@ defmodule ExDeskWeb.TicketLive.FormComponent do
 
   defp assign_form(socket, %Ecto.Changeset{} = changeset) do
     assign(socket, :form, to_form(changeset))
+  end
+
+  defp return_to(socket) do
+    to = socket.assigns.patch
+
+    cond do
+      is_binary(to) and String.starts_with?(to, "/tickets") ->
+        push_patch(socket, to: to)
+
+      is_binary(to) ->
+        push_navigate(socket, to: to)
+
+      true ->
+        push_patch(socket, to: ~p"/tickets")
+    end
   end
 
   defp changeset_for_action(:edit, ticket, attrs),

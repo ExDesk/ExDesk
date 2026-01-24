@@ -16,7 +16,7 @@ defmodule ExDeskWeb.Components.LayoutsTest do
     html = rendered_to_string(~H"<.sidebar current_scope={@current_scope} />")
 
     assert html =~ ~s(<img src="https://example.com/avatar.png")
-    refute html =~ "JE"
+    refute html =~ ~s(<span class="text-sm font-semibold">)
   end
 
   test "sidebar/1 renders initials when user has no avatar_url" do

@@ -72,25 +72,92 @@ defmodule ExDesk.Support do
   @doc """
   Lists tickets for a given space.
 
-  Returns tickets ordered by most recently created first.
+  ## Options
+    * `:q` - Search by key/id ("ABC-123", "#123", "123") or by subject/description
+    * `:priority` - Filter by priority
+    * `:assignee_id` - Filter by assignee id, or `:unassigned`
+
+  Returns tickets ordered by rank (kanban) and recency.
   """
-  def list_tickets_by_space(space_id) do
+  def list_tickets_by_space(space_id, opts \\ []) do
     Ticket
     |> where([t], t.space_id == ^space_id)
+    |> filter_ticket_query(opts[:q])
+    |> filter_by_priority(opts[:priority])
+    |> filter_by_assignee(opts[:assignee_id])
     |> order_by([t], asc_nulls_last: t.rank, desc: t.inserted_at, desc: t.id)
+    |> preload([:assignee, :requester, :group])
     |> Repo.all()
+  end
+
+  defp filter_ticket_query(query, nil), do: query
+
+  defp filter_ticket_query(query, q) when is_binary(q) do
+    q = String.trim(q)
+
+    cond do
+      q == "" ->
+        query
+
+      id = extract_ticket_id(q) ->
+        where(query, [t], t.id == ^id)
+
+      true ->
+        like = "%#{q}%"
+        where(query, [t], ilike(t.subject, ^like) or ilike(t.description, ^like))
+    end
+  end
+
+  defp extract_ticket_id(q) when is_binary(q) do
+    normalized = String.trim_leading(q, "#")
+
+    cond do
+      Regex.match?(~r/^\d+$/, normalized) ->
+        String.to_integer(normalized)
+
+      String.contains?(q, "-") ->
+        case Regex.run(~r/(\d+)$/, q) do
+          [_, id] -> String.to_integer(id)
+          _ -> nil
+        end
+
+      true ->
+        nil
+    end
   end
 
   defp filter_by_status(query, nil), do: query
   defp filter_by_status(query, status), do: where(query, [t], t.status == ^status)
 
   defp filter_by_priority(query, nil), do: query
-  defp filter_by_priority(query, priority), do: where(query, [t], t.priority == ^priority)
+  defp filter_by_priority(query, ""), do: query
+
+  defp filter_by_priority(query, priority) when is_binary(priority) do
+    case priority do
+      "low" -> where(query, [t], t.priority == :low)
+      "normal" -> where(query, [t], t.priority == :normal)
+      "high" -> where(query, [t], t.priority == :high)
+      "urgent" -> where(query, [t], t.priority == :urgent)
+      _ -> query
+    end
+  end
+
+  defp filter_by_priority(query, priority) when is_atom(priority),
+    do: where(query, [t], t.priority == ^priority)
 
   defp filter_by_assignee(query, nil), do: query
+  defp filter_by_assignee(query, ""), do: query
+  defp filter_by_assignee(query, :unassigned), do: where(query, [t], is_nil(t.assignee_id))
 
-  defp filter_by_assignee(query, assignee_id),
+  defp filter_by_assignee(query, assignee_id) when is_integer(assignee_id),
     do: where(query, [t], t.assignee_id == ^assignee_id)
+
+  defp filter_by_assignee(query, assignee_id) when is_binary(assignee_id) do
+    case assignee_id do
+      "unassigned" -> where(query, [t], is_nil(t.assignee_id))
+      _ -> query
+    end
+  end
 
   defp filter_by_requester(query, nil), do: query
 
@@ -149,7 +216,8 @@ defmodule ExDesk.Support do
 
   The sub-task inherits `space_id` and `requester_id` from the parent.
   """
-  def create_subtask(%Ticket{} = parent_ticket, attrs \\ %{}, actor_id \\ nil) when is_map(attrs) do
+  def create_subtask(%Ticket{} = parent_ticket, attrs \\ %{}, actor_id \\ nil)
+      when is_map(attrs) do
     Repo.transaction(fn ->
       changeset = build_subtask_changeset(parent_ticket, attrs)
 

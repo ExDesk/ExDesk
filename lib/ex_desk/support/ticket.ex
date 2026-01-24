@@ -102,7 +102,8 @@ defmodule ExDesk.Support.Ticket do
     |> put_change(:parent_id, nil)
   end
 
-  def set_parent(%Ecto.Changeset{} = changeset, %__MODULE__{id: parent_id}) when is_integer(parent_id) do
+  def set_parent(%Ecto.Changeset{} = changeset, %__MODULE__{id: parent_id})
+      when is_integer(parent_id) do
     set_parent(changeset, parent_id)
   end
 

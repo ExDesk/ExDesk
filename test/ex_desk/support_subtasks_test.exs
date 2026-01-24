@@ -72,10 +72,16 @@ defmodule ExDesk.SupportSubtasksTest do
       requester = user_fixture()
 
       assert {:ok, %Ticket{} = parent} =
-               Support.create_ticket(%{subject: "Parent", requester_id: requester.id}, requester.id)
+               Support.create_ticket(
+                 %{subject: "Parent", requester_id: requester.id},
+                 requester.id
+               )
 
-      assert {:ok, %Ticket{} = c1} = Support.create_subtask(parent, %{subject: "C1"}, requester.id)
-      assert {:ok, %Ticket{} = c2} = Support.create_subtask(parent, %{subject: "C2"}, requester.id)
+      assert {:ok, %Ticket{} = c1} =
+               Support.create_subtask(parent, %{subject: "C1"}, requester.id)
+
+      assert {:ok, %Ticket{} = c2} =
+               Support.create_subtask(parent, %{subject: "C2"}, requester.id)
 
       subtasks = Support.list_subtasks(parent.id)
       ids = Enum.map(subtasks, & &1.id)
