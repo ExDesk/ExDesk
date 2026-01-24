@@ -264,12 +264,12 @@ defmodule ExDeskWeb.TicketLive.Show do
 
     {:ok,
      socket
-      |> assign(:page_title, ticket.subject)
-      |> assign(:return_to, return_to)
-      |> assign(:ticket, ticket)
-      |> assign(:subtasks, subtasks)
-      |> assign(:show_subtask_form, false)
-      |> assign(:subtask_form, subtask_form)}
+     |> assign(:page_title, ticket.subject)
+     |> assign(:return_to, return_to)
+     |> assign(:ticket, ticket)
+     |> assign(:subtasks, subtasks)
+     |> assign(:show_subtask_form, false)
+     |> assign(:subtask_form, subtask_form)}
   end
 
   @impl true
@@ -286,7 +286,10 @@ defmodule ExDeskWeb.TicketLive.Show do
 
   def handle_event("validate-subtask", %{"ticket" => params}, socket) do
     changeset =
-      %Ticket{requester_id: socket.assigns.ticket.requester_id, space_id: socket.assigns.ticket.space_id}
+      %Ticket{
+        requester_id: socket.assigns.ticket.requester_id,
+        space_id: socket.assigns.ticket.space_id
+      }
       |> Ticket.create_changeset(params)
       |> Ticket.set_parent(socket.assigns.ticket)
       |> Map.put(:action, :validate)
