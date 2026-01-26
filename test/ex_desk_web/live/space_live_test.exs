@@ -265,6 +265,50 @@ defmodule ExDeskWeb.SpaceLiveTest do
     end
   end
 
+  describe "Show (kanban) filters" do
+    setup %{conn: conn} do
+      user = user_fixture()
+      space = space_fixture(template: :kanban)
+
+      %{conn: log_in_user(conn, user), user: user, space: space}
+    end
+
+    test "filters by priority via query params", %{conn: conn, user: user, space: space} do
+      assert {:ok, high} =
+               Support.create_ticket_in_space(
+                 space.id,
+                 %{subject: "High prio", requester_id: user.id, status: :open, priority: :high},
+                 user.id
+               )
+
+      assert {:ok, low} =
+               Support.create_ticket_in_space(
+                 space.id,
+                 %{subject: "Low prio", requester_id: user.id, status: :open, priority: :low},
+                 user.id
+               )
+
+      {:ok, view, _html} = live(conn, ~p"/spaces/#{space.key}?#{%{priority: "high"}}")
+
+      assert has_element?(view, "#kanban-ticket-#{high.id}")
+      refute has_element?(view, "#kanban-ticket-#{low.id}")
+    end
+
+    test "filters by key search via query params", %{conn: conn, user: user, space: space} do
+      assert {:ok, ticket} =
+               Support.create_ticket_in_space(
+                 space.id,
+                 %{subject: "Search me", requester_id: user.id, status: :open, priority: :normal},
+                 user.id
+               )
+
+      {:ok, view, _html} =
+        live(conn, ~p"/spaces/#{space.key}?#{%{q: "#{space.key}-#{ticket.id}"}}")
+
+      assert has_element?(view, "#kanban-ticket-#{ticket.id}")
+    end
+  end
+
   describe "Show (kanban) assignee" do
     setup %{conn: conn} do
       agent = user_fixture(%{role: :agent})

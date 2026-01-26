@@ -7,51 +7,68 @@ defmodule ExDeskWeb.TicketLive.Index do
   def render(assigns) do
     ~H"""
     <Layouts.app flash={@flash} current_scope={@current_scope} spaces={@spaces}>
-      <div class="header">
-        <h1>Tickets</h1>
-        <.link navigate={~p"/tickets/new"}>New Ticket</.link>
-      </div>
-
-      <div class="tickets-list">
-        <.table id="tickets" rows={@tickets}>
-          <:col :let={ticket} label="Subject">
-            <.link
-              navigate={~p"/tickets/#{ticket}?return_to=/tickets"}
-              class="font-medium hover:underline"
-            >
-              {ticket.subject}
+      <%= if @live_action in [:new, :edit] do %>
+        <div class="max-w-4xl mx-auto space-y-6">
+          <div class="flex items-center justify-between gap-3">
+            <.link navigate={@patch} class="btn btn-ghost btn-sm">
+              <.icon name="hero-arrow-left" class="size-4" /> Back
             </.link>
-          </:col>
+          </div>
 
-          <:col :let={ticket} label="Status">
-            <span class={["badge", status_badge_class(ticket.status)]}>{ticket.status}</span>
-          </:col>
+          <section class="bg-base-100 rounded-box border border-base-300 p-6 shadow-sm">
+            <.live_component
+              module={ExDeskWeb.TicketLive.FormComponent}
+              id={@ticket.id || :new}
+              title={@page_title}
+              action={@live_action}
+              ticket={@ticket}
+              patch={@patch}
+              current_scope={@current_scope}
+              spaces={@spaces}
+            />
+          </section>
+        </div>
+      <% else %>
+        <div class="max-w-6xl mx-auto space-y-6">
+          <div class="flex items-end justify-between gap-4">
+            <div>
+              <h1 class="text-2xl md:text-3xl font-bold">Tickets</h1>
+              <p class="text-base-content/60">Browse and manage support tickets.</p>
+            </div>
 
-          <:col :let={ticket} label="Priority">
-            <span class={["badge", priority_badge_class(ticket.priority)]}>{ticket.priority}</span>
-          </:col>
+            <.link navigate={~p"/tickets/new"} class="btn btn-primary">
+              <.icon name="hero-plus" class="size-4" /> New Ticket
+            </.link>
+          </div>
 
-          <:action :let={ticket}><.link navigate={~p"/tickets/#{ticket}/edit"}>Edit</.link></:action>
-        </.table>
-      </div>
+          <div class="bg-base-100 rounded-box border border-base-300 shadow-sm overflow-hidden">
+            <.table id="tickets" rows={@tickets}>
+              <:col :let={ticket} label="Subject">
+                <.link
+                  navigate={~p"/tickets/#{ticket}?return_to=/tickets"}
+                  class="font-medium hover:underline"
+                >
+                  {ticket.subject}
+                </.link>
+              </:col>
 
-      <.modal
-        :if={@live_action in [:new, :edit]}
-        id="ticket-modal"
-        show
-        on_cancel={JS.patch(~p"/tickets")}
-      >
-        <.live_component
-          module={ExDeskWeb.TicketLive.FormComponent}
-          id={@ticket.id || :new}
-          title={@page_title}
-          action={@live_action}
-          ticket={@ticket}
-          patch={@patch}
-          current_scope={@current_scope}
-          spaces={@spaces}
-        />
-      </.modal>
+              <:col :let={ticket} label="Status">
+                <span class={["badge", status_badge_class(ticket.status)]}>{ticket.status}</span>
+              </:col>
+
+              <:col :let={ticket} label="Priority">
+                <span class={["badge", priority_badge_class(ticket.priority)]}>
+                  {ticket.priority}
+                </span>
+              </:col>
+
+              <:action :let={ticket}>
+                <.link navigate={~p"/tickets/#{ticket}/edit"} class="link">Edit</.link>
+              </:action>
+            </.table>
+          </div>
+        </div>
+      <% end %>
     </Layouts.app>
     """
   end
