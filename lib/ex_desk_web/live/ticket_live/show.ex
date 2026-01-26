@@ -1,7 +1,9 @@
 defmodule ExDeskWeb.TicketLive.Show do
   use ExDeskWeb, :live_view
 
+  alias ExDesk.Repo
   alias ExDesk.Support
+  alias ExDesk.Support.Ticket
 
   @impl true
   def render(assigns) do
@@ -65,6 +67,87 @@ defmodule ExDeskWeb.TicketLive.Show do
               <p :if={!present?(@ticket.description)} class="text-base-content/60 italic">
                 No description provided.
               </p>
+            </section>
+
+            <section id="subtasks-section" class="bg-base-100 rounded-box border border-base-300 p-5">
+              <div class="flex items-center justify-between gap-4 mb-3">
+                <h2 class="text-sm font-semibold text-base-content/70">Sub-tasks</h2>
+
+                <button
+                  id="add-subtask-button"
+                  type="button"
+                  phx-click="show-subtask-form"
+                  class="btn btn-primary btn-sm"
+                >
+                  <.icon name="hero-plus" class="size-4" /> Add Sub-task
+                </button>
+              </div>
+
+              <div id="ticket-subtasks" class="space-y-2">
+                <div :if={@subtasks == []} class="text-base-content/60 italic">
+                  No sub-tasks yet.
+                </div>
+
+                <div
+                  :for={subtask <- @subtasks}
+                  id={"subtask-#{subtask.id}"}
+                  class="flex items-center gap-3 rounded-lg border border-base-200 bg-base-100 px-3 py-2"
+                >
+                  <% done? = subtask.status in [:solved, :closed] %>
+
+                  <input
+                    id={"subtask-done-#{subtask.id}"}
+                    type="checkbox"
+                    checked={done?}
+                    phx-click="toggle-subtask-status"
+                    phx-value-id={subtask.id}
+                    phx-value-to={if(done?, do: "open", else: "solved")}
+                    class="checkbox checkbox-sm"
+                  />
+
+                  <div class="min-w-0 flex-1">
+                    <.link
+                      navigate={~p"/tickets/#{subtask}?return_to=#{"/tickets/#{@ticket.id}"}"}
+                      class="font-semibold hover:underline truncate"
+                    >
+                      {subtask.subject}
+                    </.link>
+
+                    <div class="mt-1 flex items-center gap-2 text-xs text-base-content/50">
+                      <span class={["badge badge-xs", status_badge_class(subtask.status)]}>
+                        {humanize_enum(subtask.status)}
+                      </span>
+
+                      <span class="font-mono">#{subtask.id}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <%= if @show_subtask_form do %>
+                <.form
+                  for={@subtask_form}
+                  id="subtask-form"
+                  phx-change="validate-subtask"
+                  phx-submit="save-subtask"
+                  class="mt-4"
+                >
+                  <div class="flex flex-col sm:flex-row gap-3">
+                    <.input
+                      field={@subtask_form[:subject]}
+                      type="text"
+                      placeholder="Short, clear title"
+                      class="flex-1"
+                    />
+
+                    <button type="submit" class="btn btn-primary">Create</button>
+
+                    <button type="button" phx-click="cancel-subtask" class="btn btn-ghost">
+                      Cancel
+                    </button>
+                  </div>
+                </.form>
+              <% end %>
             </section>
 
             <section class="bg-base-100 rounded-box border border-base-300 p-5">
@@ -162,14 +245,93 @@ defmodule ExDeskWeb.TicketLive.Show do
   @impl true
   def mount(%{"id" => id} = params, _session, socket) do
     ticket = Support.fetch_ticket!(id)
+    subtasks = Support.list_subtasks(ticket.id)
     return_to = safe_return_to(Map.get(params, "return_to"))
+
+    subtask_form = empty_subtask_form(ticket)
 
     {:ok,
      socket
      |> assign(:page_title, ticket.subject)
      |> assign(:return_to, return_to)
-     |> assign(:ticket, ticket)}
+     |> assign(:ticket, ticket)
+     |> assign(:subtasks, subtasks)
+     |> assign(:show_subtask_form, false)
+     |> assign(:subtask_form, subtask_form)}
   end
+
+  @impl true
+  def handle_event("show-subtask-form", _params, socket) do
+    {:noreply, assign(socket, :show_subtask_form, true)}
+  end
+
+  def handle_event("cancel-subtask", _params, socket) do
+    {:noreply,
+     socket
+     |> assign(:show_subtask_form, false)
+     |> assign(:subtask_form, empty_subtask_form(socket.assigns.ticket))}
+  end
+
+  def handle_event("validate-subtask", %{"ticket" => params}, socket) do
+    changeset =
+      %Ticket{
+        requester_id: socket.assigns.ticket.requester_id,
+        space_id: socket.assigns.ticket.space_id
+      }
+      |> Ticket.create_changeset(params)
+      |> Ticket.set_parent(socket.assigns.ticket)
+      |> Map.put(:action, :validate)
+
+    {:noreply, assign(socket, :subtask_form, to_form(changeset, as: :ticket))}
+  end
+
+  def handle_event("save-subtask", %{"ticket" => params}, socket) do
+    actor_id = socket.assigns.current_scope.user.id
+
+    case Support.create_subtask(socket.assigns.ticket, params, actor_id) do
+      {:ok, _subtask} ->
+        subtasks = Support.list_subtasks(socket.assigns.ticket.id)
+
+        {:noreply,
+         socket
+         |> assign(:subtasks, subtasks)
+         |> assign(:show_subtask_form, false)
+         |> assign(:subtask_form, empty_subtask_form(socket.assigns.ticket))}
+
+      {:error, %Ecto.Changeset{} = cs} ->
+        cs = Map.put(cs, :action, :insert)
+        {:noreply, assign(socket, :subtask_form, to_form(cs, as: :ticket))}
+    end
+  end
+
+  def handle_event("toggle-subtask-status", %{"id" => id, "to" => to}, socket) do
+    actor_id = socket.assigns.current_scope.user.id
+    subtask = Repo.get!(Ticket, String.to_integer(id))
+
+    if subtask.parent_id != socket.assigns.ticket.id do
+      {:noreply, socket}
+    else
+      to = normalize_status_param(to)
+
+      _ = Support.transition_ticket(subtask, to, actor_id)
+      subtasks = Support.list_subtasks(socket.assigns.ticket.id)
+
+      {:noreply, assign(socket, :subtasks, subtasks)}
+    end
+  end
+
+  defp empty_subtask_form(ticket) do
+    %Ticket{requester_id: ticket.requester_id, space_id: ticket.space_id}
+    |> Ecto.Changeset.change()
+    |> to_form(as: :ticket)
+  end
+
+  defp normalize_status_param("open"), do: :open
+  defp normalize_status_param("pending"), do: :pending
+  defp normalize_status_param("on_hold"), do: :on_hold
+  defp normalize_status_param("solved"), do: :solved
+  defp normalize_status_param("closed"), do: :closed
+  defp normalize_status_param(_), do: :open
 
   defp safe_return_to(nil), do: nil
 

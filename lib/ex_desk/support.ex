@@ -172,6 +172,7 @@ defmodule ExDesk.Support do
     Ticket
     |> Repo.get!(id)
     |> Repo.preload([
+      :parent,
       :space,
       :requester,
       :assignee,
