@@ -47,9 +47,9 @@ defmodule ExDeskWeb.ProTip do
     >
       <div class="card-body">
         <h2 class="card-title">{@title}</h2>
-        
+
         <p>{render_slot(@inner_block)}</p>
-        
+
         <div class="card-actions justify-end mt-4">
           <button class="btn btn-sm btn-ghost bg-white/20 text-white hover:bg-white/30 border-none">
             {@action_label}

@@ -23,7 +23,10 @@ defmodule ExDeskWeb.DashboardLive do
                   <div>
                     <p class="text-sm font-medium text-base-content/60">Total Tickets</p>
 
-                    <p class="text-3xl font-mono font-bold tracking-tight mt-1 text-primary">
+                    <p
+                      id="stat-total-tickets"
+                      class="text-3xl font-mono font-bold tracking-tight mt-1 text-primary"
+                    >
                       {@total_tickets}
                     </p>
                   </div>
@@ -33,9 +36,10 @@ defmodule ExDeskWeb.DashboardLive do
                   </div>
                 </div>
 
-                <div class="mt-4 flex items-center text-sm text-success">
-                  <.icon name="hero-arrow-trending-up" class="size-4 mr-1" />
-                  <span>12% from last week</span>
+                <div class="mt-4 flex items-center text-sm text-base-content/60">
+                  <span>
+                    Last 7d: {@tickets_created_last_7} (prev: {@tickets_created_prev_7})
+                  </span>
                 </div>
               </div>
             </div>
@@ -44,10 +48,13 @@ defmodule ExDeskWeb.DashboardLive do
               <div class="card-body">
                 <div class="flex items-center justify-between">
                   <div>
-                    <p class="text-sm font-medium text-base-content/60">Open Tickets</p>
+                    <p class="text-sm font-medium text-base-content/60">Active Tickets</p>
 
-                    <p class="text-3xl font-mono font-bold tracking-tight mt-1 text-warning">
-                      {@open_tickets}
+                    <p
+                      id="stat-active-tickets"
+                      class="text-3xl font-mono font-bold tracking-tight mt-1 text-warning"
+                    >
+                      {@active_tickets}
                     </p>
                   </div>
 
@@ -57,7 +64,7 @@ defmodule ExDeskWeb.DashboardLive do
                 </div>
 
                 <div class="mt-4 flex items-center text-sm text-base-content/60">
-                  <span>Requires attention</span>
+                  <span>Open + pending + on hold</span>
                 </div>
               </div>
             </div>
@@ -68,7 +75,10 @@ defmodule ExDeskWeb.DashboardLive do
                   <div>
                     <p class="text-sm font-medium text-base-content/60">Assigned to Me</p>
 
-                    <p class="text-3xl font-mono font-bold tracking-tight mt-1 text-secondary">
+                    <p
+                      id="stat-assigned-to-me"
+                      class="text-3xl font-mono font-bold tracking-tight mt-1 text-secondary"
+                    >
                       {@assigned_tickets}
                     </p>
                   </div>
@@ -79,7 +89,7 @@ defmodule ExDeskWeb.DashboardLive do
                 </div>
 
                 <div class="mt-4 flex items-center text-sm text-base-content/60">
-                  <span>3 high priority</span>
+                  <span>{@assigned_high_priority} high priority</span>
                 </div>
               </div>
             </div>
@@ -88,10 +98,17 @@ defmodule ExDeskWeb.DashboardLive do
               <div class="card-body">
                 <div class="flex items-center justify-between">
                   <div>
-                    <p class="text-sm font-medium text-base-content/60">Avg Response Time</p>
+                    <p class="text-sm font-medium text-base-content/60">Avg First Response</p>
 
-                    <p class="text-3xl font-mono font-bold tracking-tight mt-1 text-accent">
-                      {@avg_response_time}h
+                    <p
+                      id="stat-avg-response"
+                      class="text-3xl font-mono font-bold tracking-tight mt-1 text-accent"
+                    >
+                      <%= if @avg_response_time do %>
+                        {Float.round(@avg_response_time, 1)}h
+                      <% else %>
+                        N/A
+                      <% end %>
                     </p>
                   </div>
 
@@ -100,9 +117,8 @@ defmodule ExDeskWeb.DashboardLive do
                   </div>
                 </div>
 
-                <div class="mt-4 flex items-center text-sm text-success">
-                  <.icon name="hero-arrow-trending-down" class="size-4 mr-1" />
-                  <span>15min faster</span>
+                <div class="mt-4 flex items-center text-sm text-base-content/60">
+                  <span>Based on first public agent reply</span>
                 </div>
               </div>
             </div>
@@ -163,9 +179,15 @@ defmodule ExDeskWeb.DashboardLive do
     socket =
       socket
       |> assign(:total_tickets, Support.count_total_tickets())
-      |> assign(:open_tickets, Support.count_open_tickets())
-      |> assign(:assigned_tickets, Support.count_assigned_tickets(user.id))
+      |> assign(:active_tickets, Support.count_active_tickets())
+      |> assign(:assigned_tickets, Support.count_assigned_active_tickets(user.id))
+      |> assign(
+        :assigned_high_priority,
+        Support.count_assigned_active_high_priority_tickets(user.id)
+      )
       |> assign(:avg_response_time, Support.calculate_avg_response_time())
+      |> assign(:tickets_created_last_7, Support.count_tickets_created_in_last_days(7))
+      |> assign(:tickets_created_prev_7, Support.count_tickets_created_between_days(14, 7))
       |> assign(:recent_activities, Support.list_recent_activities(limit: 5))
 
     {:ok, socket}

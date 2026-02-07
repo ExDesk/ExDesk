@@ -14,7 +14,7 @@ defmodule ExDeskWeb.TicketLive.Show do
               <.link navigate={back_href(@return_to, @ticket)} class="btn btn-ghost btn-sm">
                 <.icon name="hero-arrow-left" class="size-4" /> {back_label(@return_to, @ticket)}
               </.link>
-               <span class="badge badge-ghost badge-sm font-mono">#{@ticket.id}</span>
+              <span class="badge badge-ghost badge-sm font-mono">#{@ticket.id}</span>
             </div>
 
             <h1 class="text-2xl md:text-3xl font-bold leading-tight truncate">{@ticket.subject}</h1>

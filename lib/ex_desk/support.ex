@@ -10,6 +10,7 @@ defmodule ExDesk.Support do
   alias ExDesk.Support.{Group, Space, Ticket, TicketActivity, TicketComment}
 
   @subtask_depth_limit 3
+  @active_statuses [:open, :pending, :on_hold]
 
   defdelegate authorize(action, user, params), to: ExDesk.Support.Policy
 
@@ -711,6 +712,17 @@ defmodule ExDesk.Support do
   end
 
   @doc """
+  Returns the count of active tickets.
+
+  Active tickets are those not yet solved/closed.
+  """
+  def count_active_tickets do
+    Ticket
+    |> where([t], t.status in ^@active_statuses)
+    |> Repo.aggregate(:count, :id)
+  end
+
+  @doc """
   Returns the count of tickets assigned to a specific user.
   """
   def count_assigned_tickets(user_id) do
@@ -720,11 +732,86 @@ defmodule ExDesk.Support do
   end
 
   @doc """
+  Returns the count of active tickets assigned to a specific user.
+  """
+  def count_assigned_active_tickets(user_id) do
+    Ticket
+    |> where([t], t.assignee_id == ^user_id and t.status in ^@active_statuses)
+    |> Repo.aggregate(:count, :id)
+  end
+
+  @doc """
+  Returns the count of high/urgent active tickets assigned to a specific user.
+  """
+  def count_assigned_active_high_priority_tickets(user_id) do
+    Ticket
+    |> where(
+      [t],
+      t.assignee_id == ^user_id and t.status in ^@active_statuses and
+        t.priority in [:high, :urgent]
+    )
+    |> Repo.aggregate(:count, :id)
+  end
+
+  @doc """
+  Returns the count of tickets created in the last `days` days.
+  """
+  def count_tickets_created_in_last_days(days) when is_integer(days) and days > 0 do
+    since = DateTime.utc_now() |> DateTime.add(-days * 86_400, :second)
+
+    Ticket
+    |> where([t], t.inserted_at >= ^since)
+    |> Repo.aggregate(:count, :id)
+  end
+
+  @doc """
+  Returns the count of tickets created between `from_days_ago` (inclusive)
+  and `to_days_ago` (exclusive).
+
+  Example: previous 7 days can be computed with `(14, 7)`.
+  """
+  def count_tickets_created_between_days(from_days_ago, to_days_ago)
+      when is_integer(from_days_ago) and is_integer(to_days_ago) and from_days_ago > to_days_ago and
+             to_days_ago >= 0 do
+    from_dt = DateTime.utc_now() |> DateTime.add(-from_days_ago * 86_400, :second)
+    to_dt = DateTime.utc_now() |> DateTime.add(-to_days_ago * 86_400, :second)
+
+    Ticket
+    |> where([t], t.inserted_at >= ^from_dt and t.inserted_at < ^to_dt)
+    |> Repo.aggregate(:count, :id)
+  end
+
+  @doc """
   Calculates the average response time for solved tickets in hours.
-  Currently returns 0.0 (placeholder).
+
+  This is defined as the average time (in hours) from ticket creation to the
+  first public comment from an agent/admin.
+
+  Returns `nil` when there are no agent/admin responses.
   """
   def calculate_avg_response_time do
-    0.0
+    first_responses =
+      from c in TicketComment,
+        join: u in assoc(c, :author),
+        where: c.is_public == true and u.role in [:agent, :admin],
+        group_by: c.ticket_id,
+        select: %{ticket_id: c.ticket_id, first_response_at: min(c.inserted_at)}
+
+    query =
+      from t in Ticket,
+        join: fr in subquery(first_responses),
+        on: fr.ticket_id == t.id,
+        select:
+          type(
+            fragment(
+              "AVG(EXTRACT(EPOCH FROM (? - ?))) / 3600.0",
+              fr.first_response_at,
+              t.inserted_at
+            ),
+            :float
+          )
+
+    Repo.one(query)
   end
 
   @doc """

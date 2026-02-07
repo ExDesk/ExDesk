@@ -1,6 +1,8 @@
 defmodule ExDeskWeb.Sidebar do
   use ExDeskWeb, :html
 
+  import ExDeskWeb.Authorization, only: [can?: 2]
+
   alias ExDesk.Accounts
 
   @doc """
@@ -25,11 +27,11 @@ defmodule ExDeskWeb.Sidebar do
         <div class="text-xs font-semibold text-base-content/50 uppercase tracking-wider mb-2 px-2">
           Overview
         </div>
-         <.sidebar_link icon="hero-home" label="Dashboard" href={~p"/dashboard"} />
+        <.sidebar_link icon="hero-home" label="Dashboard" href={~p"/dashboard"} />
         <div class="text-xs font-semibold text-base-content/50 uppercase tracking-wider mt-6 mb-2 px-2">
           Spaces
         </div>
-         <.space_link :for={space <- @spaces} space={space} />
+        <.space_link :for={space <- @spaces} space={space} />
         <.link
           navigate={~p"/spaces/new"}
           class="flex items-center gap-3 px-4 py-2 rounded-xl text-base-content/50 hover:bg-base-200 hover:text-base-content transition-all group"
@@ -39,17 +41,23 @@ defmodule ExDeskWeb.Sidebar do
         <div class="text-xs font-semibold text-base-content/50 uppercase tracking-wider mt-6 mb-2 px-2">
           Manage
         </div>
-         <.sidebar_link icon="hero-computer-desktop" label="Assets" href={~p"/dashboard"} />
+        <.sidebar_link icon="hero-computer-desktop" label="Assets" href={~p"/dashboard"} />
         <.sidebar_link
           icon="hero-users"
           label="Users"
           href={~p"/dashboard"}
           badge={to_string(Accounts.count_users())}
         />
+        <.sidebar_link
+          :if={@current_scope && can?(@current_scope.user, :list_groups)}
+          icon="hero-user-group"
+          label="Groups"
+          href={~p"/groups"}
+        />
         <div class="text-xs font-semibold text-base-content/50 uppercase tracking-wider mt-6 mb-2 px-2">
           System
         </div>
-         <.sidebar_link icon="hero-chart-bar" label="Reports" href={~p"/dashboard"} />
+        <.sidebar_link icon="hero-chart-bar" label="Reports" href={~p"/dashboard"} />
         <.sidebar_link icon="hero-cog-6-tooth" label="Settings" href={~p"/users/profile"} />
       </nav>
       <!-- User Footer -->
@@ -66,10 +74,10 @@ defmodule ExDeskWeb.Sidebar do
               <img :if={@current_scope.user.avatar_url} src={@current_scope.user.avatar_url} />
             </div>
           </div>
-          
+
           <div class="flex-1 min-w-0">
             <p class="text-sm font-medium truncate">{@current_scope.user.email}</p>
-            
+
             <.link
               href={~p"/users/log-out"}
               method="delete"

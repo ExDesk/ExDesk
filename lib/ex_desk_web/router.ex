@@ -47,6 +47,11 @@ defmodule ExDeskWeb.Router do
       live "/tickets/:id/edit", TicketLive.Index, :edit
       live "/tickets/:id", TicketLive.Show, :show
 
+      # Groups
+      live "/groups", GroupLive.Index, :index
+      live "/groups/new", GroupLive.Index, :new
+      live "/groups/:id/edit", GroupLive.Index, :edit
+
       # Spaces
       live "/spaces", SpaceLive.Index, :index
       live "/spaces/new", SpaceLive.TemplateSelection, :new
