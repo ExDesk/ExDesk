@@ -11,6 +11,7 @@ defmodule ExDeskWeb.SpaceLive.Show do
     ticket_count = Support.count_tickets_by_space(space)
 
     show_assignee? = can?(socket.assigns.current_scope.user, :assign_ticket)
+    can_move_kanban? = can?(socket.assigns.current_scope.user, :transition_ticket)
 
     assignee_options =
       if show_assignee? do
@@ -28,6 +29,7 @@ defmodule ExDeskWeb.SpaceLive.Show do
       |> assign(:show_new_ticket_modal?, false)
       |> assign(:new_ticket_form, new_ticket_form())
       |> assign(:show_assignee?, show_assignee?)
+      |> assign(:can_move_kanban?, can_move_kanban?)
       |> assign(:assignee_options, assignee_options)
       |> assign(:kanban_filters, %{})
       |> assign(:kanban_filters_form, kanban_filters_form(show_assignee?, %{}))
@@ -139,26 +141,33 @@ defmodule ExDeskWeb.SpaceLive.Show do
     space = socket.assigns.space
     actor_id = socket.assigns.current_scope.user.id
 
-    result =
-      Support.move_ticket_on_kanban_board(
-        space.id,
-        String.to_integer(ticket_id),
-        from_column,
-        to_column,
-        from_ordered_ids,
-        to_ordered_ids,
-        actor_id
-      )
+    if !socket.assigns.can_move_kanban? do
+      {:noreply,
+       socket
+       |> put_flash(:error, "You are not authorized to move tickets.")
+       |> assign_kanban(space, socket.assigns.kanban_filters)}
+    else
+      result =
+        Support.move_ticket_on_kanban_board(
+          space.id,
+          String.to_integer(ticket_id),
+          from_column,
+          to_column,
+          from_ordered_ids,
+          to_ordered_ids,
+          actor_id
+        )
 
-    case result do
-      {:ok, _ticket} ->
-        {:noreply, assign_kanban(socket, space, socket.assigns.kanban_filters)}
+      case result do
+        {:ok, _ticket} ->
+          {:noreply, assign_kanban(socket, space, socket.assigns.kanban_filters)}
 
-      {:error, reason} ->
-        {:noreply,
-         socket
-         |> put_flash(:error, "Could not move ticket: #{inspect(reason)}")
-         |> assign_kanban(space, socket.assigns.kanban_filters)}
+        {:error, reason} ->
+          {:noreply,
+           socket
+           |> put_flash(:error, "Could not move ticket: #{inspect(reason)}")
+           |> assign_kanban(space, socket.assigns.kanban_filters)}
+      end
     end
   end
 
@@ -291,15 +300,21 @@ defmodule ExDeskWeb.SpaceLive.Show do
             </.form>
 
             <div class="flex items-center gap-3 justify-end text-xs text-base-content/50">
-              <span class="inline-flex items-center gap-1">
-                <.icon name="hero-arrows-up-down" class="size-3" /> Drag to reorder
-              </span>
+              <%= if @can_move_kanban? do %>
+                <span class="inline-flex items-center gap-1">
+                  <.icon name="hero-arrows-up-down" class="size-3" /> Drag to reorder
+                </span>
+              <% else %>
+                <span class="inline-flex items-center gap-1">
+                  <.icon name="hero-lock-closed" class="size-3" /> Read-only
+                </span>
+              <% end %>
             </div>
           </div>
 
           <div
             id="kanban-board"
-            phx-hook="KanbanDnD"
+            phx-hook={@can_move_kanban? && "KanbanDnD"}
             class="flex gap-4 overflow-x-auto pb-2 -mx-4 px-4 lg:mx-0 lg:px-0 scroll-px-4"
           >
             <.kanban_column
@@ -311,6 +326,7 @@ defmodule ExDeskWeb.SpaceLive.Show do
               tickets_stream={@streams.todo_tickets}
               return_to={~p"/spaces/#{@space.key}"}
               space_key={@space.key}
+              draggable?={@can_move_kanban?}
             />
 
             <.kanban_column
@@ -322,6 +338,7 @@ defmodule ExDeskWeb.SpaceLive.Show do
               tickets_stream={@streams.doing_tickets}
               return_to={~p"/spaces/#{@space.key}"}
               space_key={@space.key}
+              draggable?={@can_move_kanban?}
             />
 
             <.kanban_column
@@ -333,6 +350,7 @@ defmodule ExDeskWeb.SpaceLive.Show do
               tickets_stream={@streams.done_tickets}
               return_to={~p"/spaces/#{@space.key}"}
               space_key={@space.key}
+              draggable?={@can_move_kanban?}
             />
           </div>
 
@@ -475,6 +493,7 @@ defmodule ExDeskWeb.SpaceLive.Show do
   attr :tickets_stream, :any, required: true
   attr :return_to, :string, required: true
   attr :space_key, :string, required: true
+  attr :draggable?, :boolean, default: true
 
   def kanban_column(assigns) do
     ~H"""
@@ -514,7 +533,7 @@ defmodule ExDeskWeb.SpaceLive.Show do
           <div
             :for={{id, ticket} <- @tickets_stream}
             id={id}
-            draggable="true"
+            draggable={if(@draggable?, do: "true", else: "false")}
             data-ticket-id={ticket.id}
             data-kanban-column={@column}
           >
