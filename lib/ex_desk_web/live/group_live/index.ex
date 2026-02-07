@@ -10,22 +10,25 @@ defmodule ExDeskWeb.GroupLive.Index do
   def mount(_params, _session, socket) do
     user = socket.assigns.current_scope.user
 
-    if can?(user, :list_groups) do
-      groups = Support.list_groups()
+    socket =
+      case can?(user, :list_groups) do
+        true ->
+          groups = Support.list_groups()
 
-      {:ok,
-       socket
-       |> assign(:groups, groups)
-       |> assign(:group, nil)
-       |> assign(:form, nil)
-       |> assign(:patch, ~p"/groups")
-       |> assign(:page_title, "Groups")}
-    else
-      {:ok,
-       socket
-       |> put_flash(:error, "You are not authorized to access this page.")
-       |> redirect(to: ~p"/dashboard")}
-    end
+          socket
+          |> assign(:groups, groups)
+          |> assign(:group, nil)
+          |> assign(:form, nil)
+          |> assign(:patch, ~p"/groups")
+          |> assign(:page_title, "Groups")
+
+        false ->
+          socket
+          |> put_flash(:error, "You are not authorized to access this page.")
+          |> redirect(to: ~p"/dashboard")
+      end
+
+    {:ok, socket}
   end
 
   @impl true

@@ -24,28 +24,31 @@ defmodule ExDeskWeb.SpaceLive.Form do
         :edit -> can?(user, :update_space, space)
       end
 
-    if !allowed? do
-      {:ok,
-       socket
-       |> put_flash(:error, "You are not authorized to modify this space.")
-       |> redirect(to: back_path(action, space))}
-    else
-      changeset = Support.change_space(space)
-      suggestions = generate_key_suggestions(space.name || "")
+    socket =
+      case allowed? do
+        false ->
+          socket
+          |> put_flash(:error, "You are not authorized to modify this space.")
+          |> redirect(to: back_path(action, space))
 
-      {:ok,
-       socket
-       |> assign(:action, action)
-       |> assign(:space, space)
-       |> assign(:template, template)
-       |> assign(:key_suggestions, suggestions)
-       |> assign(
-         :template_info,
-         Map.get(@template_info, template, %{name: "Custom", color: "#6B7280"})
-       )
-       |> assign(:page_title, page_title(action))
-       |> assign(:form, to_form(changeset))}
-    end
+        true ->
+          changeset = Support.change_space(space)
+          suggestions = generate_key_suggestions(space.name || "")
+
+          socket
+          |> assign(:action, action)
+          |> assign(:space, space)
+          |> assign(:template, template)
+          |> assign(:key_suggestions, suggestions)
+          |> assign(
+            :template_info,
+            Map.get(@template_info, template, %{name: "Custom", color: "#6B7280"})
+          )
+          |> assign(:page_title, page_title(action))
+          |> assign(:form, to_form(changeset))
+      end
+
+    {:ok, socket}
   end
 
   defp resolve_action(%{"key" => key}) do

@@ -84,7 +84,6 @@ defmodule ExDesk.MixProject do
       {:credo, "~> 1.7", only: [:dev, :test], runtime: false},
       {:bodyguard, "~> 2.4"},
       {:machinery, "~> 1.1.0"},
-      {:excoveralls, "~> 0.18", only: :test},
       {:mix_unused, "~> 0.4", only: :dev, runtime: false},
       {:dialyxir, "~> 1.4", only: [:dev, :test], runtime: false},
       {:mdex, "~> 0.11"},

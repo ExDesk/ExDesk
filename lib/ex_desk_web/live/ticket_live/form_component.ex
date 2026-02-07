@@ -99,23 +99,25 @@ defmodule ExDeskWeb.TicketLive.FormComponent do
 
     changeset = changeset_for_action(:new, socket.assigns.ticket, params)
 
-    if changeset.valid? do
-      space_id = Ecto.Changeset.get_field(changeset, :space_id)
-      actor_id = socket.assigns.current_scope.user.id
-      params = Map.drop(params, ["space_id"])
+    case changeset.valid? do
+      true ->
+        space_id = Ecto.Changeset.get_field(changeset, :space_id)
+        actor_id = socket.assigns.current_scope.user.id
+        params = Map.drop(params, ["space_id"])
 
-      case Support.create_ticket_in_space(space_id, params, actor_id) do
-        {:ok, _ticket} ->
-          {:noreply,
-           socket
-           |> put_flash(:info, "Ticket created successfully")
-           |> return_to()}
+        case Support.create_ticket_in_space(space_id, params, actor_id) do
+          {:ok, _ticket} ->
+            {:noreply,
+             socket
+             |> put_flash(:info, "Ticket created successfully")
+             |> return_to()}
 
-        {:error, %Ecto.Changeset{} = changeset} ->
-          {:noreply, assign_form(socket, validate_changeset(changeset))}
-      end
-    else
-      {:noreply, assign_form(socket, validate_changeset(changeset))}
+          {:error, %Ecto.Changeset{} = changeset} ->
+            {:noreply, assign_form(socket, validate_changeset(changeset))}
+        end
+
+      false ->
+        {:noreply, assign_form(socket, validate_changeset(changeset))}
     end
   end
 
