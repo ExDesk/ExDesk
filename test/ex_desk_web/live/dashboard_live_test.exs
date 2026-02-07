@@ -57,5 +57,29 @@ defmodule ExDeskWeb.DashboardLiveTest do
       assert html =~
                Integer.to_string(Support.count_assigned_active_high_priority_tickets(agent.id))
     end
+
+    test "recent activity items link to ticket", %{conn: conn} do
+      agent = user_fixture(%{role: :agent})
+      requester = user_fixture(%{role: :user})
+      conn = log_in_user(conn, agent)
+
+      ticket = ticket_fixture(%{requester_id: requester.id, status: :open})
+      _comment = comment_fixture(%{ticket_id: ticket.id, author_id: agent.id, body: "Looking"})
+
+      [activity] = Support.list_recent_activities(limit: 1)
+
+      {:ok, view, _html} = live(conn, ~p"/dashboard")
+
+      assert has_element?(view, "#dashboard-activity-feed")
+
+      assert has_element?(view, "#activity-#{activity.id}")
+
+      assert has_element?(
+               view,
+               "#activity-#{activity.id}[href=\"/tickets/#{ticket.id}?return_to=/dashboard\"]"
+             )
+
+      assert has_element?(view, "#activity-#{activity.id}", agent.email)
+    end
   end
 end

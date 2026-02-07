@@ -129,36 +129,43 @@ defmodule ExDeskWeb.DashboardLive do
               <div class="card-body">
                 <h2 class="card-title text-base-content">Recent Activity</h2>
 
-                <ul class="steps steps-vertical mt-4">
-                  <li :for={activity <- @recent_activities} class="step step-primary">
-                    <div class="text-left">
-                      <span class="font-medium text-base-content">
-                        <%= case activity.action do %>
-                          <% :created -> %>
-                            Ticket created
-                          <% :assigned -> %>
-                            Assigned to {if activity.actor, do: activity.actor.email, else: "System"}
-                          <% :status_changed -> %>
-                            Status changed for ticket
-                          <% :commented -> %>
-                            Comment added
-                          <% other -> %>
-                            {Phoenix.Naming.humanize(other)}
-                        <% end %>
-                      </span>
-                      <span class="text-xs text-base-content/60 block">
-                        {Calendar.strftime(activity.inserted_at, "%H:%M")} - Ticket #{activity.ticket_id}
-                      </span>
-                    </div>
-                  </li>
-
-                  <li
+                <div id="dashboard-activity-feed" class="mt-4 space-y-2">
+                  <div
                     :if={length(@recent_activities) == 0}
                     class="text-base-content/50 italic text-sm py-4"
                   >
-                    No recent activity found.
-                  </li>
-                </ul>
+                    No activity yet.
+                  </div>
+
+                  <.link
+                    :for={activity <- @recent_activities}
+                    id={"activity-#{activity.id}"}
+                    navigate={~p"/tickets/#{activity.ticket_id}?return_to=/dashboard"}
+                    class="group block rounded-xl border border-base-300 bg-base-100/70 px-4 py-3 shadow-sm transition hover:bg-base-100 hover:-translate-y-px hover:shadow-md"
+                  >
+                    <div class="flex items-start justify-between gap-4">
+                      <div class="min-w-0">
+                        <div class="text-sm font-semibold text-base-content truncate">
+                          {activity_title(activity)}
+                        </div>
+                        <div class="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-base-content/60">
+                          <span class="font-mono">{activity_ticket_key(activity)}</span>
+                          <span class="text-base-content/30">•</span>
+                          <span>{Calendar.strftime(activity.inserted_at, "%H:%M")}</span>
+                          <%= if activity.actor do %>
+                            <span class="text-base-content/30">•</span>
+                            <span class="truncate">{activity.actor.email}</span>
+                          <% end %>
+                        </div>
+                      </div>
+
+                      <.icon
+                        name="hero-chevron-right"
+                        class="size-4 text-base-content/30 group-hover:text-base-content/60"
+                      />
+                    </div>
+                  </.link>
+                </div>
               </div>
             </div>
 
@@ -192,4 +199,51 @@ defmodule ExDeskWeb.DashboardLive do
 
     {:ok, socket}
   end
+
+  defp activity_title(activity) do
+    case activity.action do
+      :created ->
+        "Ticket created"
+
+      :commented ->
+        "Comment added"
+
+      :status_changed ->
+        old = activity_value(activity.old_value)
+        new = activity_value(activity.new_value)
+
+        if old && new do
+          "Status: #{activity_value_label(old)} -> #{activity_value_label(new)}"
+        else
+          "Status updated"
+        end
+
+      :priority_changed ->
+        "Priority updated"
+
+      :assigned ->
+        "Assignee updated"
+
+      :unassigned ->
+        "Unassigned"
+
+      :group_changed ->
+        "Group updated"
+
+      other ->
+        Phoenix.Naming.humanize(other)
+    end
+  end
+
+  defp activity_value(nil), do: nil
+  defp activity_value(map) when is_map(map), do: Map.get(map, "value") || Map.get(map, :value)
+
+  defp activity_value_label(val) when is_atom(val), do: Atom.to_string(val)
+  defp activity_value_label(val) when is_binary(val), do: val
+  defp activity_value_label(val), do: to_string(val)
+
+  defp activity_ticket_key(%{ticket: %{space: %{key: key}}, ticket_id: id}) when is_binary(key),
+    do: "#{key}-#{id}"
+
+  defp activity_ticket_key(%{ticket_id: id}), do: "##{id}"
 end

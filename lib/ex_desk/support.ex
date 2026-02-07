@@ -827,7 +827,7 @@ defmodule ExDesk.Support do
     |> order_by([a], desc: a.inserted_at, desc: a.id)
     |> limit(^limit)
     |> Repo.all()
-    |> Repo.preload([:actor, :ticket])
+    |> Repo.preload(actor: [], ticket: [:space])
   end
 
   @doc """
