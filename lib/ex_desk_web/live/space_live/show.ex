@@ -26,6 +26,7 @@ defmodule ExDeskWeb.SpaceLive.Show do
       |> assign(:page_title, space.name)
       |> assign(:space, space)
       |> assign(:ticket_count, ticket_count)
+      |> assign(:filtered_ticket_count, ticket_count)
       |> assign(:show_new_ticket_modal?, false)
       |> assign(:new_ticket_form, new_ticket_form())
       |> assign(:show_assignee?, show_assignee?)
@@ -33,6 +34,8 @@ defmodule ExDeskWeb.SpaceLive.Show do
       |> assign(:assignee_options, assignee_options)
       |> assign(:kanban_filters, %{})
       |> assign(:kanban_filters_form, kanban_filters_form(show_assignee?, %{}))
+      |> assign(:service_desk_filters, %{})
+      |> assign(:service_desk_filters_form, service_desk_filters_form(show_assignee?, %{}))
 
     {:ok, socket}
   end
@@ -40,20 +43,34 @@ defmodule ExDeskWeb.SpaceLive.Show do
   @impl true
   def handle_params(params, _url, socket) do
     space = socket.assigns.space
+    user = socket.assigns.current_scope.user
 
     socket =
-      if space.template == :kanban do
-        filters = parse_kanban_filters(params, socket.assigns.show_assignee?)
+      cond do
+        space.template == :kanban ->
+          filters = parse_kanban_filters(params, socket.assigns.show_assignee?)
 
-        socket
-        |> assign(:kanban_filters, filters)
-        |> assign(
-          :kanban_filters_form,
-          kanban_filters_form(socket.assigns.show_assignee?, filters)
-        )
-        |> assign_kanban(space, filters)
-      else
-        socket
+          socket
+          |> assign(:kanban_filters, filters)
+          |> assign(
+            :kanban_filters_form,
+            kanban_filters_form(socket.assigns.show_assignee?, filters)
+          )
+          |> assign_kanban(space, filters)
+
+        space.template == :service_desk ->
+          filters = parse_service_desk_filters(params, socket.assigns.show_assignee?, user)
+
+          socket
+          |> assign(:service_desk_filters, filters)
+          |> assign(
+            :service_desk_filters_form,
+            service_desk_filters_form(socket.assigns.show_assignee?, filters)
+          )
+          |> assign_service_desk(space, filters)
+
+        true ->
+          socket
       end
 
     {:noreply, socket}
@@ -109,10 +126,15 @@ defmodule ExDeskWeb.SpaceLive.Show do
     case Support.create_ticket_in_space(space.id, ticket_params, actor_id) do
       {:ok, _ticket} ->
         socket =
-          if space.template == :kanban do
-            assign_kanban(socket, space, socket.assigns.kanban_filters)
-          else
-            socket
+          cond do
+            space.template == :kanban ->
+              assign_kanban(socket, space, socket.assigns.kanban_filters)
+
+            space.template == :service_desk ->
+              assign_service_desk(socket, space, socket.assigns.service_desk_filters)
+
+            true ->
+              socket
           end
 
         {:noreply,
@@ -200,6 +222,43 @@ defmodule ExDeskWeb.SpaceLive.Show do
   end
 
   @impl true
+  def handle_event("service_desk_filter_change", %{"service_desk_filters" => raw_filters}, socket) do
+    filters =
+      parse_service_desk_filters(
+        raw_filters,
+        socket.assigns.show_assignee?,
+        socket.assigns.current_scope.user
+      )
+
+    space_key = socket.assigns.space.key
+
+    params =
+      filters
+      |> Map.take([:q, :status, :priority, :assignee_id])
+      |> Enum.reduce(%{}, fn
+        {:assignee_id, :unassigned}, acc ->
+          Map.put(acc, :assignee_id, "unassigned")
+
+        {:assignee_id, val}, acc when is_integer(val) ->
+          Map.put(acc, :assignee_id, to_string(val))
+
+        {_key, nil}, acc ->
+          acc
+
+        {_key, ""}, acc ->
+          acc
+
+        {key, val}, acc when is_atom(val) ->
+          Map.put(acc, key, Atom.to_string(val))
+
+        {key, val}, acc ->
+          Map.put(acc, key, val)
+      end)
+
+    {:noreply, push_patch(socket, to: ~p"/spaces/#{space_key}?#{params}")}
+  end
+
+  @impl true
   def render(assigns) do
     ~H"""
     <Layouts.app flash={@flash} current_scope={@current_scope} spaces={@spaces}>
@@ -223,7 +282,12 @@ defmodule ExDeskWeb.SpaceLive.Show do
                 </div>
 
                 <h1 class="text-2xl md:text-3xl font-bold truncate">{@space.name}</h1>
-                <p class="text-base-content/60">Kanban · {@ticket_count} issues</p>
+                <p class="text-base-content/60">
+                  Kanban · {@filtered_ticket_count} issues
+                  <span :if={@filtered_ticket_count != @ticket_count}>
+                    <span class="text-base-content/30">(of {@ticket_count})</span>
+                  </span>
+                </p>
               </div>
             </div>
 
@@ -314,7 +378,7 @@ defmodule ExDeskWeb.SpaceLive.Show do
 
           <div
             id="kanban-board"
-            phx-hook={@can_move_kanban? && "KanbanDnD"}
+            phx-hook={if(@can_move_kanban?, do: "KanbanDnD", else: nil)}
             class="flex gap-4 overflow-x-auto pb-2 -mx-4 px-4 lg:mx-0 lg:px-0 scroll-px-4"
           >
             <.kanban_column
@@ -403,87 +467,350 @@ defmodule ExDeskWeb.SpaceLive.Show do
           </.simple_form>
         </.modal>
       <% else %>
-        <div class="max-w-4xl mx-auto space-y-6">
-          <%!-- Header --%>
-          <div class="flex items-start justify-between">
-            <div class="flex items-center gap-4">
-              <div
-                class="size-16 rounded-xl flex items-center justify-center"
-                style={"background-color: #{@space.color}"}
-              >
-                <.icon name="hero-rectangle-stack" class="size-8 text-white" />
-              </div>
-
+        <%= if @space.template == :service_desk do %>
+          <div class="max-w-6xl mx-auto space-y-6">
+            <div class="flex items-end justify-between gap-4">
               <div>
-                <h1 class="text-3xl font-bold">{@space.name}</h1>
+                <div class="flex flex-wrap items-center gap-x-2 gap-y-1">
+                  <span class="text-xs font-mono text-base-content/50">Spaces</span>
+                  <.icon name="hero-chevron-right" class="size-3 text-base-content/30" />
+                  <span class="text-xs font-mono text-base-content/50">{@space.key}</span>
+                  <span class="text-xs text-base-content/40">Queue</span>
+                </div>
+                <h2 class="text-2xl md:text-3xl font-bold">Tickets</h2>
+                <p class="text-base-content/60">Service Desk · {template_label(@space.template)}</p>
+              </div>
 
-                <p class="text-base-content/60">{@space.key} · {template_label(@space.template)}</p>
+              <div class="flex items-center gap-2">
+                <button
+                  id="space-new-ticket"
+                  phx-click="open_new_ticket_modal"
+                  class="btn btn-primary btn-sm"
+                >
+                  <.icon name="hero-plus" class="size-4" /> Create
+                </button>
+
+                <.link
+                  :if={can?(@current_scope.user, :update_space, @space)}
+                  navigate={~p"/spaces/#{@space.key}/edit"}
+                  class="btn btn-ghost btn-sm"
+                >
+                  <.icon name="hero-pencil" class="size-4" /> Edit
+                </.link>
+
+                <button
+                  :if={can?(@current_scope.user, :delete_space, @space)}
+                  phx-click="delete"
+                  data-confirm="Are you sure you want to delete this space? This action cannot be undone."
+                  class="btn btn-ghost btn-sm text-error"
+                >
+                  <.icon name="hero-trash" class="size-4" /> Delete
+                </button>
               </div>
             </div>
 
-            <div class="flex gap-2">
-              <.link
-                :if={can?(@current_scope.user, :update_space, @space)}
-                navigate={~p"/spaces/#{@space.key}/edit"}
-                class="btn btn-ghost"
+            <.form
+              for={@service_desk_filters_form}
+              id="service-desk-filter-form"
+              phx-change="service_desk_filter_change"
+              class="flex flex-col gap-3 md:flex-row md:items-end"
+            >
+              <div class="w-full md:w-96">
+                <.input
+                  field={@service_desk_filters_form[:q]}
+                  id="service-desk-search"
+                  type="search"
+                  placeholder="Search tickets"
+                  left_icon="hero-magnifying-glass"
+                  phx-debounce="250"
+                  class="w-full input input-sm"
+                />
+              </div>
+
+              <div class="w-full md:w-48">
+                <.input
+                  field={@service_desk_filters_form[:status]}
+                  id="service-desk-filter-status"
+                  type="select"
+                  prompt="All statuses"
+                  options={[
+                    Open: "open",
+                    Pending: "pending",
+                    "On hold": "on_hold",
+                    Solved: "solved",
+                    Closed: "closed"
+                  ]}
+                  class="w-full select select-sm"
+                />
+              </div>
+
+              <div class="w-full md:w-48">
+                <.input
+                  field={@service_desk_filters_form[:priority]}
+                  id="service-desk-filter-priority"
+                  type="select"
+                  prompt="All priorities"
+                  options={[Low: "low", Normal: "normal", High: "high", Urgent: "urgent"]}
+                  class="w-full select select-sm"
+                />
+              </div>
+
+              <div :if={@show_assignee?} class="w-full md:w-64">
+                <.input
+                  field={@service_desk_filters_form[:assignee_id]}
+                  id="service-desk-filter-assignee"
+                  type="select"
+                  prompt="All assignees"
+                  options={assignee_filter_options(@assignee_options)}
+                  class="w-full select select-sm"
+                />
+              </div>
+
+              <.link patch={~p"/spaces/#{@space.key}"} class="btn btn-ghost btn-sm">Clear</.link>
+            </.form>
+
+            <div class="bg-base-100 rounded-box border border-base-300 shadow-sm overflow-hidden">
+              <.table
+                id="service-desk-tickets"
+                rows={@streams.service_desk_tickets}
+                row_item={&elem(&1, 1)}
               >
-                <.icon name="hero-pencil" class="size-4" /> Edit
+                <:col :let={ticket} label="Key">
+                  <span class="font-mono text-xs">{ticket_key(@space.key, ticket)}</span>
+                </:col>
+
+                <:col :let={ticket} label="Subject">
+                  <.link
+                    navigate={~p"/tickets/#{ticket}?return_to=/spaces/#{@space.key}"}
+                    class="link font-semibold"
+                  >
+                    {ticket.subject}
+                  </.link>
+                </:col>
+
+                <:col :let={ticket} label="Status">
+                  <span class="badge badge-ghost badge-sm">
+                    {Phoenix.Naming.humanize(ticket.status)}
+                  </span>
+                </:col>
+
+                <:col :let={ticket} label="Priority">
+                  <span class={["badge badge-sm", priority_badge_class(ticket.priority)]}>
+                    {priority_label(ticket.priority)}
+                  </span>
+                </:col>
+
+                <:col :let={ticket} label="Assignee">
+                  <span class="text-sm text-base-content/70">
+                    {ticket.assignee && ticket.assignee.email}
+                  </span>
+                </:col>
+              </.table>
+            </div>
+          </div>
+
+          <.modal
+            :if={@show_new_ticket_modal?}
+            id="space-ticket-modal"
+            show
+            on_cancel={JS.push("close_new_ticket_modal")}
+          >
+            <.header>New ticket</.header>
+
+            <.simple_form
+              for={@new_ticket_form}
+              id="space-ticket-form"
+              phx-change="validate_new_ticket"
+              phx-submit="create_new_ticket"
+            >
+              <.input field={@new_ticket_form[:subject]} type="text" label="Summary" />
+              <.input field={@new_ticket_form[:description]} type="textarea" label="Description" />
+
+              <.input
+                :if={@show_assignee?}
+                field={@new_ticket_form[:assignee_id]}
+                type="select"
+                label="Assignee"
+                prompt="Unassigned"
+                options={@assignee_options}
+              />
+
+              <.input
+                field={@new_ticket_form[:priority]}
+                type="select"
+                label="Priority"
+                options={[Low: :low, Normal: :normal, High: :high, Urgent: :urgent]}
+              />
+
+              <:actions>
+                <button type="button" phx-click="close_new_ticket_modal" class="btn btn-ghost">
+                  Cancel
+                </button>
+                <.button phx-disable-with="Creating...">Create ticket</.button>
+              </:actions>
+            </.simple_form>
+          </.modal>
+        <% else %>
+          <div class="max-w-4xl mx-auto space-y-6">
+            <%!-- Header --%>
+            <div class="flex items-start justify-between">
+              <div class="flex items-center gap-4">
+                <div
+                  class="size-16 rounded-xl flex items-center justify-center"
+                  style={"background-color: #{@space.color}"}
+                >
+                  <.icon name="hero-rectangle-stack" class="size-8 text-white" />
+                </div>
+
+                <div>
+                  <h1 class="text-3xl font-bold">{@space.name}</h1>
+
+                  <p class="text-base-content/60">{@space.key} · {template_label(@space.template)}</p>
+                </div>
+              </div>
+
+              <div class="flex gap-2">
+                <.link
+                  :if={can?(@current_scope.user, :update_space, @space)}
+                  navigate={~p"/spaces/#{@space.key}/edit"}
+                  class="btn btn-ghost"
+                >
+                  <.icon name="hero-pencil" class="size-4" /> Edit
+                </.link>
+                <button
+                  :if={can?(@current_scope.user, :delete_space, @space)}
+                  phx-click="delete"
+                  data-confirm="Are you sure you want to delete this space? This action cannot be undone."
+                  class="btn btn-ghost text-error"
+                >
+                  <.icon name="hero-trash" class="size-4" /> Delete
+                </button>
+              </div>
+            </div>
+            <%!-- Description --%>
+            <div :if={@space.description} class="card bg-base-200">
+              <div class="card-body">
+                <h3 class="font-semibold mb-2">Description</h3>
+
+                <p class="text-base-content/70">{@space.description}</p>
+              </div>
+            </div>
+            <%!-- Stats --%>
+            <div class="grid gap-4 md:grid-cols-3">
+              <div class="card bg-base-200">
+                <div class="card-body">
+                  <div class="text-sm text-base-content/60">Tickets</div>
+
+                  <div class="text-2xl font-bold">{@ticket_count}</div>
+                </div>
+              </div>
+
+              <div class="card bg-base-200">
+                <div class="card-body">
+                  <div class="text-sm text-base-content/60">Template</div>
+
+                  <div class="text-2xl font-bold">{template_label(@space.template)}</div>
+                </div>
+              </div>
+
+              <div class="card bg-base-200">
+                <div class="card-body">
+                  <div class="text-sm text-base-content/60">Created</div>
+
+                  <div class="text-2xl font-bold">
+                    {Calendar.strftime(@space.inserted_at, "%b %d")}
+                  </div>
+                </div>
+              </div>
+            </div>
+            <%!-- Actions --%>
+            <div class="flex gap-3">
+              <.link navigate={~p"/spaces"} class="btn btn-ghost">
+                <.icon name="hero-arrow-left" class="size-4" /> Back to Spaces
               </.link>
-              <button
-                :if={can?(@current_scope.user, :delete_space, @space)}
-                phx-click="delete"
-                data-confirm="Are you sure you want to delete this space? This action cannot be undone."
-                class="btn btn-ghost text-error"
-              >
-                <.icon name="hero-trash" class="size-4" /> Delete
-              </button>
             </div>
           </div>
-          <%!-- Description --%>
-          <div :if={@space.description} class="card bg-base-200">
-            <div class="card-body">
-              <h3 class="font-semibold mb-2">Description</h3>
-
-              <p class="text-base-content/70">{@space.description}</p>
-            </div>
-          </div>
-          <%!-- Stats --%>
-          <div class="grid gap-4 md:grid-cols-3">
-            <div class="card bg-base-200">
-              <div class="card-body">
-                <div class="text-sm text-base-content/60">Tickets</div>
-
-                <div class="text-2xl font-bold">{@ticket_count}</div>
-              </div>
-            </div>
-
-            <div class="card bg-base-200">
-              <div class="card-body">
-                <div class="text-sm text-base-content/60">Template</div>
-
-                <div class="text-2xl font-bold">{template_label(@space.template)}</div>
-              </div>
-            </div>
-
-            <div class="card bg-base-200">
-              <div class="card-body">
-                <div class="text-sm text-base-content/60">Created</div>
-
-                <div class="text-2xl font-bold">{Calendar.strftime(@space.inserted_at, "%b %d")}</div>
-              </div>
-            </div>
-          </div>
-          <%!-- Actions --%>
-          <div class="flex gap-3">
-            <.link navigate={~p"/spaces"} class="btn btn-ghost">
-              <.icon name="hero-arrow-left" class="size-4" /> Back to Spaces
-            </.link>
-          </div>
-        </div>
+        <% end %>
       <% end %>
     </Layouts.app>
     """
   end
+
+  defp assign_service_desk(socket, space, filters) do
+    tickets = Support.list_tickets_by_space(space.id, filters)
+
+    socket
+    |> stream(:service_desk_tickets, tickets, reset: true, dom_id: &"space-ticket-#{&1.id}")
+  end
+
+  defp service_desk_filters_form(show_assignee?, filters) when is_map(filters) do
+    base = %{
+      "q" => Map.get(filters, :q, ""),
+      "status" => Map.get(filters, :status, ""),
+      "priority" => Map.get(filters, :priority, "")
+    }
+
+    params =
+      if show_assignee? do
+        assignee_id =
+          case Map.get(filters, :assignee_id) do
+            :unassigned -> "unassigned"
+            id when is_integer(id) -> to_string(id)
+            _ -> ""
+          end
+
+        Map.put(base, "assignee_id", assignee_id)
+      else
+        base
+      end
+
+    to_form(params, as: :service_desk_filters)
+  end
+
+  defp parse_service_desk_filters(params, show_assignee?, user) when is_map(params) do
+    q = params |> Map.get("q", "") |> to_string() |> String.trim()
+    status = params |> Map.get("status", "") |> to_string() |> String.trim()
+    priority = params |> Map.get("priority", "") |> to_string() |> String.trim()
+
+    base =
+      %{}
+      |> maybe_put_filter(:q, q)
+      |> maybe_put_filter(:status, status)
+      |> maybe_put_filter(:priority, priority)
+
+    base =
+      if user && user.role == :user do
+        Map.put(base, :requester_id, user.id)
+      else
+        base
+      end
+
+    if show_assignee? do
+      assignee_id = params |> Map.get("assignee_id", "") |> to_string() |> String.trim()
+
+      case assignee_id do
+        "" ->
+          base
+
+        "unassigned" ->
+          Map.put(base, :assignee_id, :unassigned)
+
+        val ->
+          case Integer.parse(val) do
+            {id, ""} -> Map.put(base, :assignee_id, id)
+            _ -> base
+          end
+      end
+    else
+      base
+    end
+  end
+
+  defp priority_badge_class(:low), do: "badge-neutral"
+  defp priority_badge_class(:normal), do: "badge-info"
+  defp priority_badge_class(:high), do: "badge-warning"
+  defp priority_badge_class(:urgent), do: "badge-error"
+  defp priority_badge_class(_), do: "badge-ghost"
 
   attr :id, :string, required: true
   attr :column, :string, required: true
@@ -632,7 +959,7 @@ defmodule ExDeskWeb.SpaceLive.Show do
     done = Enum.filter(tickets, &(&1.status in [:solved, :closed]))
 
     socket
-    |> assign(:ticket_count, length(tickets))
+    |> assign(:filtered_ticket_count, length(tickets))
     |> assign(:todo_count, length(todo))
     |> assign(:doing_count, length(doing))
     |> assign(:done_count, length(done))

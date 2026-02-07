@@ -84,11 +84,30 @@ defmodule ExDesk.Support do
     Ticket
     |> where([t], t.space_id == ^space_id)
     |> filter_ticket_query(opts[:q])
+    |> filter_by_status_param(opts[:status])
     |> filter_by_priority(opts[:priority])
     |> filter_by_assignee(opts[:assignee_id])
+    |> filter_by_requester(opts[:requester_id])
     |> order_by([t], asc_nulls_last: t.rank, desc: t.inserted_at, desc: t.id)
     |> preload([:assignee, :requester, :group])
     |> Repo.all()
+  end
+
+  defp filter_by_status_param(query, nil), do: query
+  defp filter_by_status_param(query, ""), do: query
+
+  defp filter_by_status_param(query, status) when is_atom(status),
+    do: where(query, [t], t.status == ^status)
+
+  defp filter_by_status_param(query, status) when is_binary(status) do
+    case String.trim(status) do
+      "open" -> where(query, [t], t.status == :open)
+      "pending" -> where(query, [t], t.status == :pending)
+      "on_hold" -> where(query, [t], t.status == :on_hold)
+      "solved" -> where(query, [t], t.status == :solved)
+      "closed" -> where(query, [t], t.status == :closed)
+      _ -> query
+    end
   end
 
   defp filter_ticket_query(query, nil), do: query

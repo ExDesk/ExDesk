@@ -346,4 +346,77 @@ defmodule ExDeskWeb.SpaceLiveTest do
       assert ticket.assignee_id == assignee.id
     end
   end
+
+  describe "Show (service desk)" do
+    setup %{conn: conn} do
+      user = user_fixture(%{role: :user})
+      other = user_fixture(%{role: :user})
+      space = space_fixture(template: :service_desk)
+
+      assert {:ok, my_ticket} =
+               Support.create_ticket_in_space(
+                 space.id,
+                 %{subject: "Mine", requester_id: user.id, status: :open, priority: :normal},
+                 user.id
+               )
+
+      assert {:ok, other_ticket} =
+               Support.create_ticket_in_space(
+                 space.id,
+                 %{subject: "Other", requester_id: other.id, status: :open, priority: :normal},
+                 other.id
+               )
+
+      %{
+        conn: log_in_user(conn, user),
+        user: user,
+        space: space,
+        my_ticket: my_ticket,
+        other_ticket: other_ticket
+      }
+    end
+
+    test "end user only sees their own tickets", %{
+      conn: conn,
+      space: space,
+      my_ticket: my_ticket,
+      other_ticket: other_ticket
+    } do
+      {:ok, view, _html} = live(conn, ~p"/spaces/#{space.key}")
+
+      assert has_element?(view, "#service-desk-tickets")
+      assert has_element?(view, "#space-ticket-#{my_ticket.id}")
+      refute has_element?(view, "#space-ticket-#{other_ticket.id}")
+    end
+
+    test "agent sees all tickets in space", %{
+      space: space,
+      my_ticket: my_ticket,
+      other_ticket: other_ticket
+    } do
+      agent = user_fixture(%{role: :agent})
+
+      {:ok, view, _html} = live(log_in_user(build_conn(), agent), ~p"/spaces/#{space.key}")
+
+      assert has_element?(view, "#service-desk-tickets")
+      assert has_element?(view, "#space-ticket-#{my_ticket.id}")
+      assert has_element?(view, "#space-ticket-#{other_ticket.id}")
+    end
+
+    test "filters by status via query params", %{space: space, user: user} do
+      assert {:ok, solved_ticket} =
+               Support.create_ticket_in_space(
+                 space.id,
+                 %{subject: "Solved", requester_id: user.id, status: :solved, priority: :normal},
+                 user.id
+               )
+
+      agent = user_fixture(%{role: :agent})
+      conn = log_in_user(build_conn(), agent)
+
+      {:ok, view, _html} = live(conn, ~p"/spaces/#{space.key}?#{%{status: "solved"}}")
+
+      assert has_element?(view, "#space-ticket-#{solved_ticket.id}")
+    end
+  end
 end
